@@ -8,14 +8,16 @@ const baseNames = [
   'Priya', 'Aisha', 'Neha', 'Rani', 'Anjali', 'Pooja', 'Kiran', 'Sunita', 'Sapna', 'Nisha',
   'Shreya', 'Aparna', 'Divya', 'Ritika', 'Meena', 'Komal', 'Sneha', 'Isha', 'Rupal', 'Juhi',
 ];
+const surnames = ['Sharma', 'Kumari', 'Patel', 'Kaur', 'Das', 'Reddy', 'Joshi', 'Pandey', 'Verma', 'Gupta'];
 const profiles = Array.from({ length: 50 }).map((_, i) => {
-  const name = `${baseNames[i % baseNames.length]} ${i + 1}`;
-  const imgIdx = (i % 100) + 1;
+  const first = baseNames[i % baseNames.length];
+  const last = surnames[i % surnames.length];
+  const name = `${first} ${last}`;
   const live = i % 3 !== 0;
   return {
     id: String(i + 1),
     name,
-    img: `https://randomuser.me/api/portraits/women/${imgIdx}.jpg`,
+    img: `https://loremflickr.com/640/840/indian,woman?lock=${i + 1}`,
     live,
   };
 });
