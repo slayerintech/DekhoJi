@@ -1,20 +1,36 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { WalletProvider } from './src/context/WalletContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import GoLiveScreen from './src/screens/GoLiveScreen';
+import LiveWatchScreen from './src/screens/LiveWatchScreen';
+import PurchaseScreen from './src/screens/PurchaseScreen';
+import WaitingScreen from './src/screens/WaitingScreen';
+import BoyTabs from './src/navigation/BoyTabs';
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <WalletProvider>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <StatusBar style="light" />
+          <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Home" component={BoyTabs} />
+            <Stack.Screen name="GoLive" component={GoLiveScreen} />
+            <Stack.Screen name="LiveWatch" component={LiveWatchScreen} />
+            <Stack.Screen name="Purchase" component={PurchaseScreen} />
+            <Stack.Screen name="Waiting" component={WaitingScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </WalletProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
