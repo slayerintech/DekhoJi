@@ -25,8 +25,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   const goNext = () => {
-    if (gender === 'girl') navigation.replace('GoLive');
-    else navigation.replace('Home');
+    navigation.replace('Home');
   };
 
   return (

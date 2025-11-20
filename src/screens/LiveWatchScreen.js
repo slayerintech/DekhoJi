@@ -1,119 +1,312 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { Alert, Image, Pressable, Text, View, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useWallet } from '../context/WalletContext';
+// import { useWallet } from '../context/WalletContext'; 
+import { Ionicons } from '@expo/vector-icons';
 
-const options = [
-  { minutes: 5, diamonds: 50, price: 299 },
-  { minutes: 10, diamonds: 100, price: 499 },
-  { minutes: 20, diamonds: 200, price: 899 },
-  { minutes: 30, diamonds: 300, price: 1299 },
-  { minutes: 60, diamonds: 600, price: 2299 },
+// -----------------------------------------------------------
+// DUMMY DATA & CONTEXT
+// -----------------------------------------------------------
+
+const initialMessages = [
+    { id: '1', user: 'PriyaLover', message: 'Can you say hi to me?' },
+    { id: '2', user: 'GoldUser', message: 'Sending a virtual 🌹!' },
+    { id: '3', user: 'ViewerX', message: 'What time are you starting your video chat?' },
+    { id: '4', user: 'VipFan', message: 'Hello! You look amazing today! ✨' },
+    { id: '5', user: 'User123', message: 'Hiii, how are you?' },
 ];
 
+const newMessagesPool = [
+    { user: 'NewUser', message: 'Wow! So pretty!' },
+    { user: 'Guest01', message: 'How much for 10 minutes?' },
+    { user: 'Sumer', message: 'Great stream quality.' },
+    { user: 'DiamondsFan', message: 'Do you offer private chat?' },
+    { user: 'Viewer45', message: 'Just joined the live!' },
+    { user: 'Commenter', message: 'I love your background.' },
+];
+
+const useWallet = () => {
+    const diamonds = 100;
+    const consumeDiamonds = (amount) => console.log(`Consuming ${amount} diamonds.`);
+    return { diamonds, consumeDiamonds };
+};
+
+// -----------------------------------------------------------
+// 1. Chat Message Component
+// -----------------------------------------------------------
+
+const ChatMessage = ({ user, message }) => (
+    <View style={styles.chatMessage}> 
+        <Text style={styles.chatUser}>{user}: </Text>
+        <Text style={styles.chatText}>{message}</Text>
+    </View>
+);
+
+// -----------------------------------------------------------
+// 2. Main Screen
+// -----------------------------------------------------------
+
 export default function LiveWatchScreen({ navigation, route }) {
-  const { profile } = route.params;
-  const { diamonds, consumeDiamonds } = useWallet();
-  const [selected, setSelected] = useState(options[0]);
-  const [inSession, setInSession] = useState(false);
-  const [remaining, setRemaining] = useState(0);
-  const insets = useSafeAreaInsets();
+    const { profile } = route.params;
+    const [messages, setMessages] = useState(initialMessages);
+    const [messageCounter, setMessageCounter] = useState(initialMessages.length);
+    const [failed, setFailed] = useState(false);
+    const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!profile?.live) navigation.replace('Waiting');
-    }, 60000);
-    return () => clearTimeout(timer);
-  }, [navigation, profile]);
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setMessageCounter(prevCounter => {
+                const nextId = String(prevCounter + 1);
+                
+                const randomMessageIndex = Math.floor(Math.random() * newMessagesPool.length);
+                const newMessageContent = newMessagesPool[randomMessageIndex];
 
-  const join = () => {
-    if (diamonds < selected.diamonds) {
-      Alert.alert('Not enough diamonds', 'Please purchase more to continue.', [
-        { text: 'Buy diamonds', onPress: () => navigation.navigate('Purchase', { from: 'LiveWatch' }) },
-        { text: 'Cancel' },
-      ]);
-      return;
-    }
-    consumeDiamonds(selected.diamonds);
-    setInSession(true);
-    setRemaining(selected.minutes * 60);
-  };
+                const newMessage = {
+                    id: nextId,
+                    ...newMessageContent
+                };
+                
+                // नया मैसेज Array के START में जोड़ें
+                setMessages(prevMessages => [newMessage, ...prevMessages]);
+                
+                return prevCounter + 1;
+            });
+        }, 3000); 
 
-  useEffect(() => {
-    if (!inSession) return;
-    const tick = setInterval(() => {
-      setRemaining((r) => {
-        const v = r - 1;
-        if (v <= 0) {
-          clearInterval(tick);
-          Alert.alert('Session ended', 'Your time has finished.');
-          setInSession(false);
-        }
-        return v;
-      });
-    }, 1000);
-    return () => clearInterval(tick);
-  }, [inSession]);
+        return () => clearInterval(intervalId); 
+    }, []);
 
-  const [failed, setFailed] = useState(false);
+    const watchLive = () => {
+        navigation.navigate('Purchase', { from: 'LiveWatch' });
+    };
+    
+    const goBack = () => {
+        navigation.goBack();
+    };
+    
+    // केवल नवीनतम 10 संदेश ही दिखाएं
+    const displayMessages = messages.slice(0, 10); 
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
-      {!inSession ? (
-        <>
-          {failed ? (
-            <LinearGradient colors={["#111827", "#1f2937"]} style={{ height: 320, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: '#fff', opacity: 0.8 }}>Image unavailable</Text>
-            </LinearGradient>
-          ) : (
-            <Image source={{ uri: profile.img }} style={{ height: 320 }} onError={() => setFailed(true)} />
-          )}
-          <View style={{ padding: 16 }}>
-            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>{profile.name}</Text>
-            <Text style={{ color: '#bbb', marginBottom: 12 }}>Select duration</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              {options.map((opt) => (
-                <Pressable
-                  key={opt.minutes}
-                  onPress={() => setSelected(opt)}
-                  style={{
-                    paddingVertical: 10,
-                    paddingHorizontal: 12,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: selected.minutes === opt.minutes ? '#e91e63' : '#333',
-                    marginRight: 8,
-                    marginBottom: 8,
-                  }}
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            
+            {/* Live Video Preview Section */}
+            <View style={styles.videoContainer}>
+                
+                {failed ? (
+                    <LinearGradient colors={["#111827", "#1f2937"]} style={styles.videoPlaceholder}>
+                        <Text style={styles.fallbackText}>Live Preview Unavailable</Text>
+                    </LinearGradient>
+                ) : (
+                    <Image source={{ uri: profile.img }} style={styles.videoImage} onError={() => setFailed(true)} />
+                )}
+
+                {/* Top Overlay: Back Button and Live Badge */}
+                <View style={styles.overlayTop}>
+                    <Pressable onPress={goBack} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#fff" />
+                    </Pressable>
+
+                    <View style={styles.liveBadge}>
+                        <View style={styles.liveDot} />
+                        <Text style={styles.liveText}>LIVE</Text>
+                    </View>
+                </View>
+
+                {/* Bottom Overlay: Profile Info */}
+                <LinearGradient 
+                    colors={["transparent", "rgba(0,0,0,0.7)"]} 
+                    style={styles.overlayBottom}
                 >
-                  <Text style={{ color: '#fff' }}>{opt.minutes}m • 💎{opt.diamonds} • ₹{opt.price}</Text>
-                </Pressable>
-              ))}
+                    <Text style={styles.profileName}>{profile.name}</Text>
+                    <View style={styles.viewerPill}>
+                        <Ionicons name="eye" size={14} color="#F9FAFB" />
+                        <Text style={styles.viewerText}>{profile.viewers ? (profile.viewers / 1000).toFixed(1) + 'k' : '2.5k'}</Text>
+                    </View>
+                </LinearGradient>
             </View>
-            <Pressable onPress={join} style={{ backgroundColor: '#e91e63', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 12 }}>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Join Live</Text>
-            </Pressable>
-          </View>
-        </>
-      ) : (
-        <View style={{ flex: 1 }}>
-          {failed ? (
-            <LinearGradient colors={["#111827", "#1f2937"]} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: '#fff', opacity: 0.8 }}>Image unavailable</Text>
-            </LinearGradient>
-          ) : (
-            <Image source={{ uri: profile.img }} style={{ flex: 1 }} onError={() => setFailed(true)} />
-          )}
-          <LinearGradient colors={["transparent", "rgba(0,0,0,0.7)"]} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: insets.bottom + 12, paddingTop: 16 }}>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{profile.name}</Text>
-            <Text style={{ color: '#fff' }}>Time left: {Math.floor(remaining / 60)}:{('0' + (remaining % 60)).slice(-2)}</Text>
-            <Pressable onPress={() => setInSession(false)} style={{ backgroundColor: '#e91e63', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 12 }}>
-              <Text style={{ color: '#fff' }}>End Session</Text>
-            </Pressable>
-          </LinearGradient>
-        </View>
-      )}
-    </SafeAreaView>
-  );
+
+            {/* Chat & Action Section */}
+            <View style={styles.chatSection}>
+                <Text style={styles.chatTitle}>Live Chat Preview</Text>
+                
+                <FlatList
+                    data={displayMessages} 
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => <ChatMessage {...item} />}
+                    inverted={true} 
+                    style={styles.chatList}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ justifyContent: 'flex-end', flexGrow: 1 }} 
+                />
+                
+                {/* Watch Button */}
+                <Pressable 
+                    onPress={watchLive} 
+                    style={styles.watchButton}
+                >
+                    <Text style={styles.watchButtonText}>Tap to Watch Full Live Show</Text>
+                    <Text style={styles.watchButtonSubtitle}> (Starts at 50 💎 / ₹299)</Text>
+                </Pressable>
+            </View>
+
+        </SafeAreaView>
+    );
 }
+
+// -----------------------------------------------------------
+// 3. Styles (Spacing and Font Size Increased)
+// -----------------------------------------------------------
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#0a0a0a',
+    },
+    videoContainer: {
+        height: 350, 
+        backgroundColor: '#000',
+    },
+    videoImage: {
+        flex: 1,
+        width: '100%',
+    },
+    videoPlaceholder: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fallbackText: {
+        color: '#fff',
+        opacity: 0.8,
+    },
+    // --- Overlay Styles ---
+    overlayTop: {
+        position: 'absolute',
+        top: 10,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+    },
+    backButton: {
+        padding: 8,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        borderRadius: 50,
+    },
+    liveBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 999,
+        backgroundColor: '#e11d48', 
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    liveDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 999,
+        backgroundColor: '#FEE2E2',
+        marginRight: 5,
+    },
+    liveText: {
+        color: '#F9FAFB',
+        fontWeight: '800',
+        fontSize: 11,
+        letterSpacing: 0.6,
+    },
+    overlayBottom: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 16,
+        paddingVertical: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    profileName: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    viewerPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+    },
+    viewerText: {
+        color: '#E5E7EB',
+        fontWeight: '600',
+        fontSize: 12,
+        marginLeft: 4,
+    },
+    // --- Chat Section ---
+    chatSection: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingTop: 10,
+    },
+    chatTitle: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+        borderLeftWidth: 3,
+        borderColor: '#ff529f',
+        paddingLeft: 8,
+    },
+    chatList: {
+        flex: 1,
+        paddingBottom: 10, 
+    },
+    chatMessage: {
+        flexDirection: 'row',
+        // 🚀 स्पेसिंग बढ़ाई गई (Increased Spacing)
+        marginBottom: 8, 
+        backgroundColor: 'rgba(255,255,255,0.1)', 
+        paddingVertical: 6, // Vertical padding बढ़ाया गया
+        paddingHorizontal: 10,
+        borderRadius: 8, // Border radius बढ़ाया गया
+        opacity: 0.9,
+    },
+    chatUser: {
+        color: '#60a5fa', 
+        fontWeight: '700',
+        // 🚀 फ़ॉन्ट साइज़ बढ़ाया गया (Increased Font Size)
+        fontSize: 15, 
+    },
+    chatText: {
+        color: '#fff',
+        // 🚀 फ़ॉन्ट साइज़ बढ़ाया गया (Increased Font Size)
+        fontSize: 15, 
+        flexShrink: 1,
+    },
+    // --- Watch Button ---
+    watchButton: {
+        backgroundColor: '#e11d48', 
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 10,
+        marginBottom: 20, 
+    },
+    watchButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '800',
+    },
+    watchButtonSubtitle: {
+        color: '#FDE68A',
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 2,
+    },
+});

@@ -20,8 +20,7 @@ export default function App() {
       <SafeAreaProvider>
         <NavigationContainer>
           <StatusBar style="light" />
-          <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Home" component={BoyTabs} />
             <Stack.Screen name="GoLive" component={GoLiveScreen} />

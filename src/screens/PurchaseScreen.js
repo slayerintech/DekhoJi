@@ -1,91 +1,354 @@
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, Text, TextInput, View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useWallet } from '../context/WalletContext';
+// import { useWallet } from '../context/WalletContext'; // अपने वास्तविक context का उपयोग करें
+import { Ionicons } from '@expo/vector-icons';
+
+// -----------------------------------------------------------
+// DUMMY CONTEXT (Remove and use your actual context)
+// -----------------------------------------------------------
+const useWallet = () => {
+    const creditDiamonds = (amount) => console.log(`Crediting ${amount} diamonds.`);
+    return { creditDiamonds };
+};
+
+// -----------------------------------------------------------
+// DATA
+// -----------------------------------------------------------
 
 const packs = [
-  { label: '50 💎', diamonds: 50, price: 299 },
-  { label: '100 💎', diamonds: 100, price: 499 },
-  { label: '200 💎', diamonds: 200, price: 899 },
-  { label: '300 💎', diamonds: 300, price: 1299 },
-  { label: '600 💎', diamonds: 600, price: 2299 },
+    { label: 'Starter Pack', diamonds: 50, price: 299, bonus: '0' },
+    { label: 'Basic Pack', diamonds: 100, price: 499, bonus: '0' },
+    { label: 'Value Pack', diamonds: 200, price: 899, bonus: '+10' },
+    { label: 'Pro Pack', diamonds: 300, price: 1299, bonus: '+20' },
+    { label: 'Mega Bundle', diamonds: 600, price: 2299, bonus: '+50 FREE' },
 ];
 
-export default function PurchaseScreen({ navigation }) {
-  const { creditDiamonds } = useWallet();
-  const [selected, setSelected] = useState(packs[0]);
-  const [utr, setUtr] = useState('');
-  const insets = useSafeAreaInsets();
+// -----------------------------------------------------------
+// 1. Diamond Card Component
+// -----------------------------------------------------------
 
-  const verifyPayment = () => {
-    if (!utr || utr.length < 8) {
-      Alert.alert('Invalid UTR', 'Enter the UTR/Ref number from your payment.');
-      return;
-    }
-    creditDiamonds(selected.diamonds);
-    Alert.alert('Payment verified', `Added ${selected.diamonds} diamonds.`);
-    navigation.goBack();
-  };
+function DiamondPackCard({ pack, selected, onPress }) {
+    const isSelected = selected.diamonds === pack.diamonds;
+    
+    const gradientColors = isSelected 
+        ? ['#ff529f', '#cb00a2'] 
+        : ['#1c1c1c', '#0f0f0f'];
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
-      <LinearGradient colors={["#1a0208ff", "#19053aff", "#cb00a2ff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 16, paddingTop: insets.top - 12, paddingBottom: 12 }}>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>Buy Diamonds</Text>
-        <Text style={{ color: '#fff', opacity: 0.8, marginTop: 4 }}>Scan QR to pay, then enter UTR</Text>
-      </LinearGradient>
-
-      <View style={{ padding: 16 }}>
-        <Image source={{ uri: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=PAY_TO_YOUR_QR' }} style={{ width: 240, height: 240, alignSelf: 'center', marginVertical: 16 }} />
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {packs.map((p) => (
-            <Pressable
-              key={p.diamonds}
-              onPress={() => setSelected(p)}
-              style={{
-                paddingVertical: 12,
-                paddingHorizontal: 14,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: selected.diamonds === p.diamonds ? '#e91e63' : '#333',
-                backgroundColor: selected.diamonds === p.diamonds ? 'rgba(233,30,99,0.15)' : '#121212',
-                marginRight: 8,
-                marginBottom: 8,
-              }}
+    return (
+        <Pressable 
+            onPress={onPress} 
+            style={styles.packWrapper}
+        >
+            <LinearGradient
+                colors={gradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[
+                    styles.packCard,
+                    isSelected ? styles.packCardSelected : styles.packCardDefault
+                ]}
             >
-              <Text style={{ color: '#fff', fontWeight: '700' }}>{p.label}</Text>
-              <Text style={{ color: '#bbb' }}>₹{p.price}</Text>
-            </Pressable>
-          ))}
-        </View>
+                {pack.bonus !== '0' && (
+                    <View style={styles.bonusBadge}>
+                        <Text style={styles.bonusText}>{pack.bonus}</Text>
+                    </View>
+                )}
+                
+                <Ionicons name="diamond" size={32} color={isSelected ? "#FDE68A" : "#888"} />
 
-        <TextInput value={utr} onChangeText={setUtr} placeholder="Enter UTR/Ref number" placeholderTextColor="#888" style={styles.input} />
-        <Pressable onPress={verifyPayment} style={[styles.btnPrimary, { marginBottom: insets.bottom + 8 }]}>
-          <Text style={styles.btnText}>Verify & Add Diamonds</Text>
+                <Text style={styles.packLabel}>{pack.label}</Text>
+                
+                {/* Diamond Amount: Already safe */}
+                <View style={styles.diamondAmountContainer}>
+                    <Text style={styles.diamondAmountText}>
+                        {pack.diamonds}
+                    </Text>
+                    <Text style={styles.diamondSymbol}> 💎</Text>
+                </View>
+
+                <View style={styles.pricePill}>
+                    <Text style={styles.priceText}>Buy for ₹{pack.price}</Text>
+                </View>
+            </LinearGradient>
         </Pressable>
-      </View>
-    </SafeAreaView>
-  );
+    );
 }
 
-const styles = {
-  input: {
-    backgroundColor: '#1c1c1c',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#fff',
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  btnPrimary: {
-    backgroundColor: '#e91e63',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-};
+// -----------------------------------------------------------
+// 2. Main Screen (Text String Fixes Applied Here)
+// -----------------------------------------------------------
+
+export default function PurchaseScreen({ navigation }) {
+    const { creditDiamonds } = useWallet();
+    
+    const [selected, setSelected] = useState(packs[0]); 
+    const [utr, setUtr] = useState('');
+    const insets = useSafeAreaInsets();
+
+    const verifyPayment = () => {
+        if (!utr || utr.length < 8) {
+            Alert.alert('Invalid UTR', 'Please enter the 8+ digit UTR/Reference number from your payment.');
+            return;
+        }
+        creditDiamonds(selected.diamonds);
+        Alert.alert('Payment Verified', `Successfully added ${selected.diamonds} diamonds to your account.`);
+        // navigation.goBack(); 
+    };
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <LinearGradient 
+                colors={["#140014", "#19053a", "#cb00a2"]} 
+                start={{ x: 0, y: 0 }} 
+                end={{ x: 1, y: 1 }} 
+                style={[styles.header, { paddingTop: (insets.top || 0) + 4, paddingBottom: 10 }]}
+            >
+                <View style={{ width: 24 }} />
+                <Text style={styles.headerTitle}>Buy Diamonds 💎</Text>
+                <View style={{ width: 24 }} />
+            </LinearGradient>
+
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+                {/* Section 1: Diamond Packs */}
+                <Text style={styles.sectionTitle}>1. Choose a Diamond Pack</Text>
+                <View style={styles.packsContainer}>
+                    {packs.map((p) => (
+                        <DiamondPackCard
+                            key={p.diamonds}
+                            pack={p}
+                            selected={selected}
+                            onPress={() => setSelected(p)}
+                        />
+                    ))}
+                </View>
+                
+                <View style={styles.separator} />
+
+                {/* Section 2: QR Code Payment - FIX APPLIED HERE */}
+                <Text style={styles.sectionTitle}>
+                    <Text>2. Scan & Pay </Text> 
+                    <Text style={{fontWeight: '900'}}>(₹{selected.price})</Text>
+                </Text>
+
+                <View style={styles.qrContainer}>
+                    <Image 
+                        source={{ uri: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=PAY_TO_YOUR_QR' }} 
+                        style={styles.qrImage} 
+                    />
+                    
+                    {/* QR Subtitle - FIX APPLIED HERE */}
+                    <Text style={styles.qrSubtitle}>
+                        <Text>Make a payment of </Text>
+                        <Text style={{fontWeight: 'bold'}}>₹{selected.price}</Text>
+                        <Text> to the QR code above.</Text>
+                    </Text>
+                </View>
+                
+                <View style={styles.separator} />
+                
+                {/* Section 3: UTR Input & Verification */}
+                <Text style={styles.sectionTitle}>3. Enter UTR/Ref No. </Text>
+                <TextInput 
+                    value={utr} 
+                    onChangeText={setUtr} 
+                    keyboardType="numeric"
+                    placeholder="Enter 12-digit UTR/Reference number" 
+                    placeholderTextColor="#777" 
+                    style={styles.input} 
+                />
+                
+                <Pressable 
+                    onPress={verifyPayment} 
+                    style={({ pressed }) => [
+                        styles.btnPrimary,
+                        { opacity: pressed ? 0.8 : 1 }
+                    ]}
+                >
+                    <Text style={styles.btnText}>VERIFY PAYMENT & GET {selected.diamonds} 💎</Text>
+                </Pressable>
+
+                <Text style={styles.noteText}>Note: UTR verification can take up to 5 minutes.</Text>
+
+            </ScrollView>
+        </SafeAreaView>
+    );
+}
+
+// -----------------------------------------------------------
+// 3. STYLES
+// -----------------------------------------------------------
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#0a0a0a',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOpacity: 0.5,
+    },
+    headerTitle: {
+        color: '#fff',
+        fontSize: 18, 
+        fontWeight: '800',
+    },
+    scrollContent: {
+        padding: 16,
+    },
+    sectionTitle: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 10,
+        marginTop: 15,
+        borderLeftWidth: 3,
+        borderColor: '#ff529f',
+        paddingLeft: 8,
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#1c1c1c',
+        marginVertical: 20,
+    },
+    // --- Pack Cards ---
+    packsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    packWrapper: {
+        width: '48%', 
+        marginBottom: 12,
+    },
+    packCard: {
+        borderRadius: 15,
+        padding: 15,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 160,
+        borderWidth: 2,
+    },
+    packCardDefault: {
+        borderColor: '#1c1c1c',
+    },
+    packCardSelected: {
+        borderColor: '#ff529f',
+        shadowColor: '#ff529f',
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+    bonusBadge: {
+        position: 'absolute',
+        top: -10,
+        right: -10,
+        backgroundColor: '#00cc66',
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        transform: [{ rotate: '5deg' }],
+        zIndex: 10,
+    },
+    bonusText: {
+        color: '#fff',
+        fontWeight: '900',
+        fontSize: 10,
+    },
+    packLabel: {
+        color: '#ccc',
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginTop: 5,
+    },
+    
+    diamondAmountContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    diamondAmountText: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: '900',
+    },
+    diamondSymbol: {
+        color: '#FDE68A',
+        fontSize: 20,
+        fontWeight: '900',
+    },
+    
+    pricePill: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 50,
+        marginTop: 10,
+    },
+    priceText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 13,
+    },
+    // --- QR Section ---
+    qrContainer: {
+        alignItems: 'center',
+        paddingVertical: 20,
+        backgroundColor: '#121212',
+        borderRadius: 15,
+    },
+    qrImage: {
+        width: 180,
+        height: 180,
+        backgroundColor: '#fff', 
+        borderRadius: 5,
+    },
+    qrSubtitle: {
+        color: '#aaa',
+        marginTop: 15,
+        fontSize: 12,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+    },
+    // --- Input & Button ---
+    input: {
+        backgroundColor: '#1c1c1c',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        color: '#fff',
+        fontSize: 16,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    btnPrimary: {
+        backgroundColor: '#ff529f', 
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 20,
+        marginBottom: 10,
+    },
+    btnText: { 
+        color: '#fff', 
+        fontSize: 17, 
+        fontWeight: '800',
+        textTransform: 'uppercase'
+    },
+    noteText: {
+        color: '#999',
+        fontSize: 12,
+        textAlign: 'center',
+        paddingTop: 10,
+    }
+});
