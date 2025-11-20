@@ -30,7 +30,7 @@ export default function PurchaseScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
-      <LinearGradient colors={["#ef4770", "#7c3aed", "#1f2937"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 16, paddingTop: insets.top + 12, paddingBottom: 12 }}>
+      <LinearGradient colors={["#1a0208ff", "#19053aff", "#cb00a2ff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 16, paddingTop: insets.top - 12, paddingBottom: 12 }}>
         <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>Buy Diamonds</Text>
         <Text style={{ color: '#fff', opacity: 0.8, marginTop: 4 }}>Scan QR to pay, then enter UTR</Text>
       </LinearGradient>
