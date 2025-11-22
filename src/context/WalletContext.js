@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { db } from '../services/firebase';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const WalletContext = createContext(null);
 
@@ -31,8 +33,47 @@ export function WalletProvider({ children }) {
     persist();
   }, [gender, user, diamonds]);
 
-  const creditDiamonds = (count) => setDiamonds((d) => d + count);
-  const consumeDiamonds = (count) => setDiamonds((d) => Math.max(0, d - count));
+  React.useEffect(() => {
+    const syncUser = async () => {
+      if (!user || !user.id) return;
+      const ref = doc(db, 'users', user.id);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        setDiamonds(typeof data.diamonds === 'number' ? data.diamonds : 0);
+      } else {
+        await setDoc(ref, {
+          name: user.name || '',
+          email: user.email || '',
+          avatar: user.avatar || '',
+          diamonds: 0,
+          createdAt: Date.now(),
+        });
+        setDiamonds(0);
+      }
+    };
+    syncUser();
+  }, [user]);
+
+  const creditDiamonds = async (count) => {
+    setDiamonds((d) => d + count);
+    try {
+      if (user && user.id) {
+        const ref = doc(db, 'users', user.id);
+        await updateDoc(ref, { diamonds: (diamonds + count) });
+      }
+    } catch {}
+  };
+  const consumeDiamonds = async (count) => {
+    setDiamonds((d) => Math.max(0, d - count));
+    try {
+      if (user && user.id) {
+        const ref = doc(db, 'users', user.id);
+        const next = Math.max(0, diamonds - count);
+        await updateDoc(ref, { diamonds: next });
+      }
+    } catch {}
+  };
 
   const value = useMemo(
     () => ({

@@ -11,6 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
+import { NativeModules, Platform } from 'react-native';
 
 const baseNames = [
   'Priya', 'Aisha', 'Neha', 'Rani', 'Anjali', 'Pooja', 'Kiran', 'Sunita', 'Sapna', 'Nisha',
@@ -101,6 +102,7 @@ function ProfileCard({ item, onPress }) {
 export default function HomeScreen({ navigation }) {
   const { diamonds, setLiveRooms } = useWallet();
   const insets = useSafeAreaInsets();
+  
 
   useEffect(() => {
     setLiveRooms(profiles.filter((p) => p.live));

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1014858874602",
+    "project_id": "dekhoji-a2c34",
+    "storage_bucket": "dekhoji-a2c34.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1014858874602:android:878752a590fb1c9eb26193",
+        "android_client_info": {
+          "package_name": "com.slayer.dekhoji"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOCxUnjZ8AQSYRcL5V5Fj1UHS4rm2TGiw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

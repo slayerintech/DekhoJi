@@ -2,16 +2,10 @@ import React, { useState } from 'react';
 import { Alert, Image, Pressable, Text, TextInput, View, StyleSheet, ScrollView, Linking, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-// import { useWallet } from '../context/WalletContext'; // अपने वास्तविक context का उपयोग करें
+import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
 
-// -----------------------------------------------------------
-// DUMMY CONTEXT (Remove and use your actual context)
-// -----------------------------------------------------------
-const useWallet = () => {
-    const creditDiamonds = (amount) => console.log(`Crediting ${amount} diamonds.`);
-    return { creditDiamonds };
-};
+ 
 
 // -----------------------------------------------------------
 // DATA

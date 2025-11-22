@@ -18,12 +18,24 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "package": "com.slayer.dekhoji",
+        "googleServicesFile": "./google-services.json"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.slayerintech.DekhoJi"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    // "plugins": [
+    //   "expo-web-browser"
+    // ],
+    "plugins": ["expo-web-browser"],
+    "extra": {
+      "eas": {
+        "projectId": "7e1f3569-b5ad-4d5f-9553-1819db07e00a"
+      }
     }
   }
 }

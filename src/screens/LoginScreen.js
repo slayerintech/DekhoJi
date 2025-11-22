@@ -9,28 +9,61 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { NativeModules, Platform } from 'react-native';
 import { useWallet } from '../context/WalletContext';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../services/firebase';
 
 export default function LoginScreen({ navigation }) {
   const { setUser } = useWallet();
   const insets = useSafeAreaInsets();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  React.useEffect(() => {}, []);
 
-  const continueGoogle = () => {
-    Alert.alert('Google Sign-In', 'Configure Google OAuth to enable this. Using mock login.');
-    setUser({ name: 'Google User', method: 'google' });
-    navigation.replace('Home');
+  const continueGoogle = async () => {};
+
+  const continueEmail = async () => {
+    const em = email.trim();
+    const pw = password;
+    const okEmail = /.+@.+\..+/.test(em);
+    if (!okEmail) { Alert.alert('Email Login', 'Enter a valid email.'); return; }
+    if (!pw || pw.length < 6) { Alert.alert('Email Login', 'Password must be at least 6 characters.'); return; }
+    try {
+      const cred = await signInWithEmailAndPassword(auth, em, pw);
+      const u = cred.user;
+      setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'email' });
+      navigation.replace('Home');
+    } catch (e) {
+      try {
+        const credNew = await createUserWithEmailAndPassword(auth, em, pw);
+        const u = credNew.user;
+        setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'email' });
+        navigation.replace('Home');
+      } catch (err) {
+        const code = err?.code || '';
+        if (code === 'auth/email-already-in-use') {
+          Alert.alert('Email Login', 'Email already exists. Check your password.');
+        } else if (code === 'auth/invalid-email') {
+          Alert.alert('Email Login', 'Invalid email address.');
+        } else if (code === 'auth/weak-password') {
+          Alert.alert('Email Login', 'Weak password. Use at least 6 characters.');
+        } else if (code === 'auth/network-request-failed') {
+          Alert.alert('Email Login', 'Network error. Check Firebase config and internet.');
+        } else {
+          Alert.alert('Email Login', 'Unable to login or register.');
+        }
+      }
+    }
   };
 
-  const continueFacebook = () => {
-    Alert.alert('Facebook Sign-In', 'Configure Facebook OAuth to enable this. Using mock login.');
-    setUser({ name: 'Facebook User', method: 'facebook' });
-    navigation.replace('Home');
-  };
+  
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -58,21 +91,32 @@ export default function LoginScreen({ navigation }) {
 
               <View style={styles.card}>
                 <BlurView intensity={30} tint="light" style={styles.cardBlur} />
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Email"
+                  placeholderTextColor="#888"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.input}
+                />
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Password"
+                  placeholderTextColor="#888"
+                  secureTextEntry
+                  style={styles.input}
+                />
                 <Pressable
-                  onPress={continueGoogle}
+                  onPress={continueEmail}
                   style={({ pressed }) => [styles.btnGoogle, pressed && styles.pressed]}
                 >
-                  <Ionicons name="logo-google" size={20} color="#fff" style={{ marginRight: 12 }} />
-                  <Text style={styles.btnText}>Login with Google</Text>
+                  <Ionicons name="mail" size={20} color="#fff" style={{ marginRight: 12 }} />
+                  <Text style={styles.btnText}>Continue with Email</Text>
                 </Pressable>
 
-                <Pressable
-                  onPress={continueFacebook}
-                  style={({ pressed }) => [styles.btnFb, pressed && styles.pressed]}
-                >
-                  <FontAwesome name="facebook" size={20} color="#fff" style={{ marginRight: 12 }} />
-                  <Text style={styles.btnText}>Continue with Facebook</Text>
-                </Pressable>
+                
 
                 <Text style={styles.terms}>
                   By continuing you agree to our <Text style={styles.link} onPress={() => navigation.navigate('Terms')}>Terms and Conditions</Text>
@@ -152,16 +196,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-
-  btnFb: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1877F2',
-    paddingVertical: 14,
-    borderRadius: 10,
-    width: '100%',
-    justifyContent: 'center',
-  },
   cardBlur: { ...StyleSheet.absoluteFillObject },
 
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
@@ -178,4 +212,16 @@ const styles = StyleSheet.create({
   registerRow: { flexDirection: 'row', marginTop: 18 },
   newHere: { color: 'rgba(255,255,255,0.6)', fontSize: 13 },
   registerLink: { color: '#ff2fb0', fontSize: 13, fontWeight: '700' },
+  input: {
+    backgroundColor: '#1c1c1c',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: '#fff',
+    fontSize: 16,
+    width: '100%',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
 });
