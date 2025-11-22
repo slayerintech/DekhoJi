@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Alert, Image, Pressable, Text, View, StyleSheet, FlatList } from 'react-native';
+import { Alert, Image, Pressable, Text, View, StyleSheet, FlatList, TextInput } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-// import { useWallet } from '../context/WalletContext'; 
+import { useWallet } from '../context/WalletContext'; 
 import { Ionicons } from '@expo/vector-icons';
 
 // -----------------------------------------------------------
-// DUMMY DATA & CONTEXT
+// DUMMY DATA
 // -----------------------------------------------------------
 
 const initialMessages = [
@@ -26,11 +26,7 @@ const newMessagesPool = [
     { user: 'Commenter', message: 'I love your background.' },
 ];
 
-const useWallet = () => {
-    const diamonds = 100;
-    const consumeDiamonds = (amount) => console.log(`Consuming ${amount} diamonds.`);
-    return { diamonds, consumeDiamonds };
-};
+ 
 
 // -----------------------------------------------------------
 // 1. Chat Message Component
@@ -53,6 +49,8 @@ export default function LiveWatchScreen({ navigation, route }) {
     const [messageCounter, setMessageCounter] = useState(initialMessages.length);
     const [failed, setFailed] = useState(false);
     const insets = useSafeAreaInsets();
+    const { diamonds } = useWallet();
+    const [comment, setComment] = useState('');
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -129,7 +127,15 @@ export default function LiveWatchScreen({ navigation, route }) {
 
             {/* Chat & Action Section */}
             <View style={styles.chatSection}>
-                <Text style={styles.chatTitle}>Live Chat Preview</Text>
+                <Text style={styles.chatTitle}>Live Chat</Text>
+
+                {/* Share Button */}
+                <Pressable style={styles.shareButton} onPress={() => Alert.alert('Share', 'Share with your friends!')}>
+                    <LinearGradient colors={["#ff9c00", "#ff3b6b"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.shareButtonInner}>
+                        <Ionicons name="heart" size={18} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={{ color: '#fff', fontWeight: '700' }}>Share with Friend</Text>
+                    </LinearGradient>
+                </Pressable>
                 
                 <FlatList
                     data={displayMessages} 
@@ -141,14 +147,26 @@ export default function LiveWatchScreen({ navigation, route }) {
                     contentContainerStyle={{ justifyContent: 'flex-end', flexGrow: 1 }} 
                 />
                 
-                {/* Watch Button */}
-                <Pressable 
-                    onPress={watchLive} 
-                    style={styles.watchButton}
-                >
-                    <Text style={styles.watchButtonText}>Tap to Watch Full Live Show</Text>
-                    <Text style={styles.watchButtonSubtitle}> (Starts at 50 💎 / ₹299)</Text>
-                </Pressable>
+                {/* Conditional: Comment bar only if user has diamonds; otherwise show watch button */}
+                {diamonds > 0 ? (
+                    <View style={styles.commentBar}>
+                        <TextInput
+                            value={comment}
+                            onChangeText={setComment}
+                            placeholder="Write a Comment..."
+                            placeholderTextColor="#666"
+                            style={styles.commentInput}
+                        />
+                        <Pressable style={styles.sendButton} onPress={() => setComment('')}>
+                            <Ionicons name="send" size={16} color="#fff" />
+                        </Pressable>
+                    </View>
+                ) : (
+                    <Pressable onPress={watchLive} style={styles.watchButton}>
+                        <Text style={styles.watchButtonText}>Tap to Watch Full Live Show</Text>
+                        <Text style={styles.watchButtonSubtitle}> (Starts at 50 💎 / ₹299)</Text>
+                    </Pressable>
+                )}
             </View>
 
         </SafeAreaView>
@@ -308,5 +326,42 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         marginTop: 2,
+    },
+    // --- Share Button ---
+    shareButton: {
+        marginBottom: 10,
+    },
+    shareButtonInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderRadius: 24,
+    },
+    // --- Comment Bar ---
+    commentBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        borderRadius: 999,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginTop: 8,
+        marginBottom: 20,
+    },
+    commentInput: {
+        flex: 1,
+        color: '#111',
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+    },
+    sendButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#ff3b6b',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 6,
     },
 });

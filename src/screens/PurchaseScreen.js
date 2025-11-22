@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, Text, TextInput, View, StyleSheet, ScrollView } from 'react-native';
+import { Alert, Image, Pressable, Text, TextInput, View, StyleSheet, ScrollView, Linking, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 // import { useWallet } from '../context/WalletContext'; // अपने वास्तविक context का उपयोग करें
@@ -24,6 +24,70 @@ const packs = [
     { label: 'Pro Pack', diamonds: 300, price: 1299, bonus: '+20' },
     { label: 'Mega Bundle', diamonds: 600, price: 2299, bonus: '+50 FREE' },
 ];
+
+const UPI_ID = 'yourupi@bank';
+const PAYEE_NAME = 'DekhoJi';
+const UPI_LOGOS = {
+  gpay: 'https://seeklogo.com/images/G/google-pay-logo-01E36658FE-seeklogo.com.png',
+  phonepe: 'https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png',
+  paytm: 'https://download.logo.wine/logo/Paytm/Paytm-Logo.wine.png',
+};
+
+function upiUrl(amount, tn) {
+  const q = [
+    `pa=${encodeURIComponent(UPI_ID)}`,
+    `pn=${encodeURIComponent(PAYEE_NAME)}`,
+    `am=${encodeURIComponent(String(amount))}`,
+    `cu=INR`,
+    `tn=${encodeURIComponent(tn)}`,
+  ].join('&');
+  return `upi://pay?${q}`;
+}
+
+async function openUPIPayment(app, amount) {
+  const tn = `DekhoJi ${amount} INR`;
+  const url = upiUrl(amount, tn);
+  if (Platform.OS === 'android') {
+    let pkg = null;
+    if (app === 'gpay') pkg = 'com.google.android.apps.nbu.paisa.user';
+    if (app === 'phonepe') pkg = 'com.phonepe.app';
+    if (app === 'paytm') pkg = 'net.one97.paytm';
+    if (pkg) {
+      const intentUrl = `intent://pay?${url.split('?')[1]}#Intent;scheme=upi;package=${pkg};end`;
+      try { await Linking.openURL(intentUrl); return; } catch {}
+    }
+  }
+  try { await Linking.openURL(url); } catch { Alert.alert('Payment', 'Unable to open UPI app. Please scan the QR.'); }
+}
+
+async function openAnyUPIPayment(amount) {
+  const tn = `DekhoJi ${amount} INR`;
+  const url = upiUrl(amount, tn);
+  if (Platform.OS === 'android') {
+    const pkgs = [
+      { app: 'gpay', pkg: 'com.google.android.apps.nbu.paisa.user' },
+      { app: 'phonepe', pkg: 'com.phonepe.app' },
+      { app: 'paytm', pkg: 'net.one97.paytm' },
+    ];
+    for (const { pkg } of pkgs) {
+      const intentUrl = `intent://pay?${url.split('?')[1]}#Intent;scheme=upi;package=${pkg};end`;
+      try { await Linking.openURL(intentUrl); return; } catch {}
+    }
+  }
+  try { await Linking.openURL(url); } catch { Alert.alert('Payment', 'Unable to open UPI app. Please scan the QR.'); }
+}
+
+function UpiLogo({ uri, label }) {
+  const [err, setErr] = useState(false);
+  if (err) {
+    return (
+      <View style={styles.upiLogoFallback}>
+        <Text style={styles.upiLogoFallbackText}>{label}</Text>
+      </View>
+    );
+  }
+  return <Image source={{ uri }} style={styles.upiLogoImg} onError={() => setErr(true)} />;
+}
 
 // -----------------------------------------------------------
 // 1. Diamond Card Component
@@ -67,6 +131,7 @@ function DiamondPackCard({ pack, selected, onPress }) {
                     </Text>
                     <Text style={styles.diamondSymbol}> 💎</Text>
                 </View>
+
 
                 <View style={styles.pricePill}>
                     <Text style={styles.priceText}>Buy for ₹{pack.price}</Text>
@@ -132,6 +197,14 @@ export default function PurchaseScreen({ navigation }) {
                     <Text>2. Scan & Pay </Text> 
                     <Text style={{fontWeight: '900'}}>(₹{selected.price})</Text>
                 </Text>
+                <Pressable onPress={() => openAnyUPIPayment(selected.price)} style={styles.upiSingleBtn}>
+                  <View style={styles.upiSingleBtnInner}>
+                    <UpiLogo uri={UPI_LOGOS.gpay} label="GPay" />
+                    <UpiLogo uri={UPI_LOGOS.phonepe} label="PhonePe" />
+                    <UpiLogo uri={UPI_LOGOS.paytm} label="Paytm" />
+                    <Text style={styles.upiBtnText}>Pay with UPI</Text>
+                  </View>
+                </Pressable>
 
                 <View style={styles.qrContainer}>
                     <Image 
@@ -350,5 +423,44 @@ const styles = StyleSheet.create({
         fontSize: 12,
         textAlign: 'center',
         paddingTop: 10,
+    },
+    upiBtnText: {
+        color: '#fff',
+        fontWeight: '700',
+    },
+    upiSingleBtn: {
+        backgroundColor: '#ff529f',
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    upiSingleBtnInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    upiLogoImg: {
+        width: 30,
+        height: 30,
+        marginRight: 8,
+        borderRadius: 4,
+        backgroundColor: '#fff',
+    },
+    upiLogoFallback: {
+        width: 30,
+        height: 30,
+        marginRight: 8,
+        borderRadius: 4,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+    },
+    upiLogoFallbackText: {
+        color: '#111',
+        fontSize: 10,
+        fontWeight: '700',
     }
 });

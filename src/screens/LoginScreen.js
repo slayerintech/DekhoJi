@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, ImageBackground, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useWallet } from '../context/WalletContext';
 
 export default function LoginScreen({ navigation }) {
   const { gender, setUser } = useWallet();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const insets = useSafeAreaInsets();
 
   const continueGoogle = () => {
     Alert.alert('Google Sign-In', 'Configure Google OAuth to enable this. Using mock login.');
     setUser({ name: 'Google User', method: 'google' });
-    goNext();
-  };
-
-  const loginBasic = () => {
-    if (!username || !password) {
-      Alert.alert('Missing info', 'Please enter username and password.');
-      return;
-    }
-    setUser({ name: username, method: 'password' });
     goNext();
   };
 
@@ -30,51 +21,29 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
-      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ color: '#fff', fontSize: 28, fontWeight: '700', marginBottom: 8 }}>Welcome</Text>
-        <Text style={{ color: '#bbb', marginBottom: 24 }}>Sign in to continue</Text>
+      <ImageBackground
+        source={{ uri: 'https://loremflickr.com/1080/1920/indian,model,girl?lock=27' }}
+        style={{ flex: 1 }}
+        resizeMode="cover"
+      >
+        <LinearGradient
+          colors={["rgba(0,0,0,0.6)", "rgba(10,10,10,0.9)"]}
+          style={{ flex: 1, paddingTop: insets.top, paddingHorizontal: 24, paddingBottom: insets.bottom, justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ color: '#fff', fontSize: 34, fontWeight: '800', textAlign: 'center', marginBottom: 12 }}>DekhoJi</Text>
+          <Text style={{ color: '#ddd', textAlign: 'center', marginBottom: 24, fontSize: 16 }}>Find live connections instantly</Text>
 
-        <Pressable onPress={continueGoogle} style={styles.btnGoogle}>
-          <Text style={styles.btnText}>Continue with Google</Text>
-        </Pressable>
-
-        <View style={{ height: 16 }} />
-
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Username"
-          placeholderTextColor="#888"
-          style={styles.input}
-        />
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          secureTextEntry
-          placeholderTextColor="#888"
-          style={styles.input}
-        />
-
-        <Pressable onPress={loginBasic} style={styles.btnPrimary}>
-          <Text style={styles.btnText}>Sign in</Text>
-        </Pressable>
-      </View>
+          <Pressable onPress={continueGoogle} style={styles.btnGoogle}>
+            <Ionicons name="logo-google" size={18} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.btnText}>Continue with Google</Text>
+          </Pressable>
+        </LinearGradient>
+      </ImageBackground>
     </SafeAreaView>
   );
 }
 
 const styles = {
-  input: {
-    backgroundColor: '#1c1c1c',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#fff',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
   btnPrimary: {
     backgroundColor: '#e91e63',
     paddingVertical: 14,
@@ -87,6 +56,10 @@ const styles = {
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    minWidth: 240,
   },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 };
