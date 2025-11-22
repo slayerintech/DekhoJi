@@ -31,6 +31,10 @@ export default function ProfileScreen({ navigation }) {
           </Pressable>
         )}
 
+        <Pressable onPress={() => navigation.navigate('Terms')} style={{ backgroundColor: '#1c1c1c', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 16, borderWidth: 1, borderColor: '#333' }}>
+          <Text style={{ color: '#fff' }}>Terms & Conditions</Text>
+        </Pressable>
+
         <Pressable style={{ backgroundColor: '#e91e63', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 24 }}>
           <Text style={{ color: '#fff' }}>Edit Profile</Text>
         </Pressable>

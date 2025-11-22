@@ -11,6 +11,7 @@ import LiveWatchScreen from './src/screens/LiveWatchScreen';
 import PurchaseScreen from './src/screens/PurchaseScreen';
 import WaitingScreen from './src/screens/WaitingScreen';
 import BoyTabs from './src/navigation/BoyTabs';
+import TermsScreen from './src/screens/TermsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ export default function App() {
             <Stack.Screen name="LiveWatch" component={LiveWatchScreen} />
             <Stack.Screen name="Purchase" component={PurchaseScreen} />
             <Stack.Screen name="Waiting" component={WaitingScreen} />
+            <Stack.Screen name="Terms" component={TermsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
