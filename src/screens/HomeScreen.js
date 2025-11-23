@@ -11,13 +11,36 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
-import { NativeModules, Platform } from 'react-native';
+ 
 
 const baseNames = [
   'Priya', 'Aisha', 'Neha', 'Rani', 'Anjali', 'Pooja', 'Kiran', 'Sunita', 'Sapna', 'Nisha',
   'Shreya', 'Aparna', 'Divya', 'Ritika', 'Meena', 'Komal', 'Sneha', 'Isha', 'Rupal', 'Juhi',
 ];
 const surnames = ['Sharma', 'Kumari', 'Patel', 'Kaur', 'Das', 'Reddy', 'Joshi', 'Pandey', 'Verma', 'Gupta'];
+
+const girlImages = [
+  'https://randomuser.me/api/portraits/women/1.jpg',
+  'https://randomuser.me/api/portraits/women/2.jpg',
+  'https://randomuser.me/api/portraits/women/3.jpg',
+  'https://randomuser.me/api/portraits/women/4.jpg',
+  'https://randomuser.me/api/portraits/women/5.jpg',
+  'https://randomuser.me/api/portraits/women/6.jpg',
+  'https://randomuser.me/api/portraits/women/7.jpg',
+  'https://randomuser.me/api/portraits/women/8.jpg',
+  'https://randomuser.me/api/portraits/women/9.jpg',
+  'https://randomuser.me/api/portraits/women/10.jpg',
+  'https://randomuser.me/api/portraits/women/11.jpg',
+  'https://randomuser.me/api/portraits/women/12.jpg',
+  'https://randomuser.me/api/portraits/women/13.jpg',
+  'https://randomuser.me/api/portraits/women/14.jpg',
+  'https://randomuser.me/api/portraits/women/15.jpg',
+  'https://randomuser.me/api/portraits/women/16.jpg',
+  'https://randomuser.me/api/portraits/women/17.jpg',
+  'https://randomuser.me/api/portraits/women/18.jpg',
+  'https://randomuser.me/api/portraits/women/19.jpg',
+  'https://randomuser.me/api/portraits/women/20.jpg',
+];
 
 function viewersFor(i) {
   const base = 200 + ((i * 73) % 4800);
@@ -28,7 +51,7 @@ function fmt(n) {
   return n >= 1000 ? (n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0) + 'k' : String(n);
 }
 
-const profiles = Array.from({ length: 50 }).map((_, i) => {
+const profiles = Array.from({ length: 20 }).map((_, i) => {
   const first = baseNames[i % baseNames.length];
   const last = surnames[i % surnames.length];
   const name = `${first} ${last}`;
@@ -36,7 +59,7 @@ const profiles = Array.from({ length: 50 }).map((_, i) => {
   return {
     id: String(i + 1),
     name,
-    img: `https://loremflickr.com/1080/1350/indian,model,girl?lock=${i + 1}`,
+    img: girlImages[i % girlImages.length],
     live,
     viewers: viewersFor(i + 1),
   };

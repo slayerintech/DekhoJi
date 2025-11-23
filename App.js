@@ -9,8 +9,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import GoLiveScreen from './src/screens/GoLiveScreen';
 import LiveWatchScreen from './src/screens/LiveWatchScreen';
-import PurchaseScreen from './src/screens/PurchaseScreen';
 import WaitingScreen from './src/screens/WaitingScreen';
+import PurchaseScreen from './src/screens/PurchaseScreen';
 import BoyTabs from './src/navigation/BoyTabs';
 import TermsScreen from './src/screens/TermsScreen';
 

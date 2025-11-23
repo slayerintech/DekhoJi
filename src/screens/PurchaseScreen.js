@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, Text, TextInput, View, StyleSheet, ScrollView, Linking, Platform } from 'react-native';
+import { Alert, Pressable, Text, View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
@@ -18,69 +18,13 @@ const packs = [
     { label: 'Pro Pack', diamonds: 300, price: 1299, bonus: '+20' },
     { label: 'Mega Bundle', diamonds: 600, price: 2299, bonus: '+50 FREE' },
 ];
-
-const UPI_ID = 'yourupi@bank';
-const PAYEE_NAME = 'DekhoJi';
-const UPI_LOGOS = {
-  gpay: 'https://seeklogo.com/images/G/google-pay-logo-01E36658FE-seeklogo.com.png',
-  phonepe: 'https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png',
-  paytm: 'https://download.logo.wine/logo/Paytm/Paytm-Logo.wine.png',
-};
-
-function upiUrl(amount, tn) {
-  const q = [
-    `pa=${encodeURIComponent(UPI_ID)}`,
-    `pn=${encodeURIComponent(PAYEE_NAME)}`,
-    `am=${encodeURIComponent(String(amount))}`,
-    `cu=INR`,
-    `tn=${encodeURIComponent(tn)}`,
-  ].join('&');
-  return `upi://pay?${q}`;
+function skuForDiamonds(d) {
+  const map = { 50: 'dj_diamonds_50', 100: 'dj_diamonds_100', 200: 'dj_diamonds_200', 300: 'dj_diamonds_300', 600: 'dj_diamonds_600' };
+  return map[d];
 }
-
-async function openUPIPayment(app, amount) {
-  const tn = `DekhoJi ${amount} INR`;
-  const url = upiUrl(amount, tn);
-  if (Platform.OS === 'android') {
-    let pkg = null;
-    if (app === 'gpay') pkg = 'com.google.android.apps.nbu.paisa.user';
-    if (app === 'phonepe') pkg = 'com.phonepe.app';
-    if (app === 'paytm') pkg = 'net.one97.paytm';
-    if (pkg) {
-      const intentUrl = `intent://pay?${url.split('?')[1]}#Intent;scheme=upi;package=${pkg};end`;
-      try { await Linking.openURL(intentUrl); return; } catch {}
-    }
-  }
-  try { await Linking.openURL(url); } catch { Alert.alert('Payment', 'Unable to open UPI app. Please scan the QR.'); }
-}
-
-async function openAnyUPIPayment(amount) {
-  const tn = `DekhoJi ${amount} INR`;
-  const url = upiUrl(amount, tn);
-  if (Platform.OS === 'android') {
-    const pkgs = [
-      { app: 'gpay', pkg: 'com.google.android.apps.nbu.paisa.user' },
-      { app: 'phonepe', pkg: 'com.phonepe.app' },
-      { app: 'paytm', pkg: 'net.one97.paytm' },
-    ];
-    for (const { pkg } of pkgs) {
-      const intentUrl = `intent://pay?${url.split('?')[1]}#Intent;scheme=upi;package=${pkg};end`;
-      try { await Linking.openURL(intentUrl); return; } catch {}
-    }
-  }
-  try { await Linking.openURL(url); } catch { Alert.alert('Payment', 'Unable to open UPI app. Please scan the QR.'); }
-}
-
-function UpiLogo({ uri, label }) {
-  const [err, setErr] = useState(false);
-  if (err) {
-    return (
-      <View style={styles.upiLogoFallback}>
-        <Text style={styles.upiLogoFallbackText}>{label}</Text>
-      </View>
-    );
-  }
-  return <Image source={{ uri }} style={styles.upiLogoImg} onError={() => setErr(true)} />;
+function diamondsForSku(sku) {
+  const map = { dj_diamonds_50: 50, dj_diamonds_100: 100, dj_diamonds_200: 200, dj_diamonds_300: 300, dj_diamonds_600: 600 };
+  return map[sku] || 0;
 }
 
 // -----------------------------------------------------------
@@ -141,19 +85,62 @@ function DiamondPackCard({ pack, selected, onPress }) {
 
 export default function PurchaseScreen({ navigation }) {
     const { creditDiamonds } = useWallet();
-    
-    const [selected, setSelected] = useState(packs[0]); 
-    const [utr, setUtr] = useState('');
+    const [selected, setSelected] = useState(packs[0]);
+    const [iapReady, setIapReady] = useState(false);
+    const [iapModule, setIapModule] = useState(null);
+    const [products, setProducts] = useState([]);
     const insets = useSafeAreaInsets();
 
-    const verifyPayment = () => {
-        if (!utr || utr.length < 8) {
-            Alert.alert('Invalid UTR', 'Please enter the 8+ digit UTR/Reference number from your payment.');
-            return;
-        }
-        creditDiamonds(selected.diamonds);
-        Alert.alert('Payment Verified', `Successfully added ${selected.diamonds} diamonds to your account.`);
-        // navigation.goBack(); 
+    React.useEffect(() => {
+      (async () => {
+        let IAP;
+        try { IAP = require('expo-in-app-purchases'); } catch {}
+        if (!IAP) { return; }
+        setIapModule(IAP);
+        try {
+          await IAP.connectAsync();
+          const ids = packs.map((p) => skuForDiamonds(p.diamonds)).filter(Boolean);
+          const res = await IAP.getProductsAsync(ids);
+          setProducts(res?.results || []);
+          IAP.setPurchaseListener(async ({ responseCode, results }) => {
+            if (responseCode === IAP.IAPResponseCode.OK) {
+              for (const purchase of results) {
+                if (purchase && purchase.acknowledged === false) {
+                  const d = diamondsForSku(purchase.productId);
+                  if (d) {
+                    await creditDiamonds(d);
+                    Alert.alert('Purchase successful', `Added ${d} diamonds.`);
+                  }
+                  try { await IAP.finishTransactionAsync(purchase, true); } catch {}
+                }
+              }
+            } else if (responseCode === IAP.IAPResponseCode.USER_CANCELED) {
+              Alert.alert('Purchase canceled', 'Transaction canceled');
+            } else {
+              Alert.alert('Purchase failed', 'Unable to complete purchase');
+            }
+          });
+          setIapReady(true);
+        } catch {}
+      })();
+      return () => {
+        (async () => {
+          try { if (iapModule?.disconnectAsync) await iapModule.disconnectAsync(); } catch {}
+        })();
+      };
+    }, []);
+
+    const buyNow = async () => {
+      const sku = skuForDiamonds(selected.diamonds);
+      if (!iapReady || !iapModule || !sku) {
+        Alert.alert('Purchases unavailable', 'Use a development or production build to buy.');
+        return;
+      }
+      try {
+        await iapModule.purchaseItemAsync(sku);
+      } catch {
+        Alert.alert('Purchase failed', 'Unable to initiate purchase');
+      }
     };
 
     return (
@@ -171,7 +158,6 @@ export default function PurchaseScreen({ navigation }) {
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-                {/* Section 1: Diamond Packs */}
                 <Text style={styles.sectionTitle}>1. Choose a Diamond Pack</Text>
                 <View style={styles.packsContainer}>
                     {packs.map((p) => (
@@ -185,59 +171,13 @@ export default function PurchaseScreen({ navigation }) {
                 </View>
                 
                 <View style={styles.separator} />
-
-                {/* Section 2: QR Code Payment - FIX APPLIED HERE */}
-                <Text style={styles.sectionTitle}>
-                    <Text>2. Scan & Pay </Text> 
-                    <Text style={{fontWeight: '900'}}>(₹{selected.price})</Text>
-                </Text>
-                <Pressable onPress={() => openAnyUPIPayment(selected.price)} style={styles.upiSingleBtn}>
-                  <View style={styles.upiSingleBtnInner}>
-                    <UpiLogo uri={UPI_LOGOS.gpay} label="GPay" />
-                    <UpiLogo uri={UPI_LOGOS.phonepe} label="PhonePe" />
-                    <UpiLogo uri={UPI_LOGOS.paytm} label="Paytm" />
-                    <Text style={styles.upiBtnText}>Pay with UPI</Text>
-                  </View>
-                </Pressable>
-
-                <View style={styles.qrContainer}>
-                    <Image 
-                        source={{ uri: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=PAY_TO_YOUR_QR' }} 
-                        style={styles.qrImage} 
-                    />
-                    
-                    {/* QR Subtitle - FIX APPLIED HERE */}
-                    <Text style={styles.qrSubtitle}>
-                        <Text>Make a payment of </Text>
-                        <Text style={{fontWeight: 'bold'}}>₹{selected.price}</Text>
-                        <Text> to the QR code above.</Text>
-                    </Text>
-                </View>
-                
-                <View style={styles.separator} />
-                
-                {/* Section 3: UTR Input & Verification */}
-                <Text style={styles.sectionTitle}>3. Enter UTR/Ref No. </Text>
-                <TextInput 
-                    value={utr} 
-                    onChangeText={setUtr} 
-                    keyboardType="numeric"
-                    placeholder="Enter 12-digit UTR/Reference number" 
-                    placeholderTextColor="#777" 
-                    style={styles.input} 
-                />
-                
+                <Text style={styles.sectionTitle}>2. Pay via Google Play</Text>
                 <Pressable 
-                    onPress={verifyPayment} 
-                    style={({ pressed }) => [
-                        styles.btnPrimary,
-                        { opacity: pressed ? 0.8 : 1 }
-                    ]}
+                  onPress={buyNow}
+                  style={({ pressed }) => [styles.btnPrimary, { opacity: pressed ? 0.8 : 1 }]}
                 >
-                    <Text style={styles.btnText}>VERIFY PAYMENT & GET {selected.diamonds} 💎</Text>
+                  <Text style={styles.btnText}>Buy ₹{selected.price} for {selected.diamonds} 💎</Text>
                 </Pressable>
-
-                <Text style={styles.noteText}>Note: UTR verification can take up to 5 minutes.</Text>
 
             </ScrollView>
         </SafeAreaView>
