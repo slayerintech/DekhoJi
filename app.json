@@ -22,7 +22,9 @@
       },
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
-      "package": "com.slayer.dekhoji"
+      "package": "com.slayer.dekhoji",
+      "versionCode": 1,
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/icon.png"
