@@ -100,7 +100,7 @@ export default function ProfileScreen({ navigation }) {
             <MenuItem 
               icon="shield-checkmark-outline" 
               title="Privacy Policy" 
-              onPress={() => {}} 
+              onPress={() => navigation.navigate('Privacy')} 
               hideBorder
             />
           </View>

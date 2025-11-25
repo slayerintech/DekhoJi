@@ -13,6 +13,7 @@ import WaitingScreen from './src/screens/WaitingScreen';
 import PurchaseScreen from './src/screens/PurchaseScreen';
 import BoyTabs from './src/navigation/BoyTabs';
 import TermsScreen from './src/screens/TermsScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,7 @@ export default function App() {
             <Stack.Screen name="Purchase" component={PurchaseScreen} />
             <Stack.Screen name="Waiting" component={WaitingScreen} />
             <Stack.Screen name="Terms" component={TermsScreen} />
+            <Stack.Screen name="Privacy" component={PrivacyPolicyScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
