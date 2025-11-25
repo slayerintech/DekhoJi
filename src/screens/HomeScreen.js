@@ -20,26 +20,28 @@ const baseNames = [
 const surnames = ['Sharma', 'Kumari', 'Patel', 'Kaur', 'Das', 'Reddy', 'Joshi', 'Pandey', 'Verma', 'Gupta'];
 
 const girlImages = [
-  'https://randomuser.me/api/portraits/women/1.jpg',
-  'https://randomuser.me/api/portraits/women/2.jpg',
-  'https://randomuser.me/api/portraits/women/3.jpg',
-  'https://randomuser.me/api/portraits/women/4.jpg',
-  'https://randomuser.me/api/portraits/women/5.jpg',
-  'https://randomuser.me/api/portraits/women/6.jpg',
-  'https://randomuser.me/api/portraits/women/7.jpg',
-  'https://randomuser.me/api/portraits/women/8.jpg',
-  'https://randomuser.me/api/portraits/women/9.jpg',
-  'https://randomuser.me/api/portraits/women/10.jpg',
-  'https://randomuser.me/api/portraits/women/11.jpg',
-  'https://randomuser.me/api/portraits/women/12.jpg',
-  'https://randomuser.me/api/portraits/women/13.jpg',
-  'https://randomuser.me/api/portraits/women/14.jpg',
-  'https://randomuser.me/api/portraits/women/15.jpg',
-  'https://randomuser.me/api/portraits/women/16.jpg',
-  'https://randomuser.me/api/portraits/women/17.jpg',
-  'https://randomuser.me/api/portraits/women/18.jpg',
-  'https://randomuser.me/api/portraits/women/19.jpg',
-  'https://randomuser.me/api/portraits/women/20.jpg',
+  require('../../assets/img1.jpeg'),
+  require('../../assets/img2.png'),
+  require('../../assets/img3.jpeg'),
+  require('../../assets/img4.jpeg'),
+  require('../../assets/img5.jpeg'),
+  require('../../assets/img6.jpeg'),
+  require('../../assets/img7.jpeg'),
+  require('../../assets/img8.jpeg'),
+  require('../../assets/img9.jpeg'),
+  require('../../assets/img10.jpeg'),
+  require('../../assets/img11.jpeg'),
+  require('../../assets/img12.jpeg'),
+  require('../../assets/img13.jpeg'),
+  require('../../assets/img14.jpeg'),
+  require('../../assets/img15.jpeg'),
+  require('../../assets/img16.jpeg'),
+  require('../../assets/img17.jpeg'),
+  require('../../assets/img18.jpeg'),
+  require('../../assets/img19.jpeg'),
+  require('../../assets/img20.jpeg'),
+  require('../../assets/img21.jpeg'),
+  require('../../assets/img22.jpeg'),
 ];
 
 function viewersFor(i) {
@@ -51,7 +53,7 @@ function fmt(n) {
   return n >= 1000 ? (n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0) + 'k' : String(n);
 }
 
-const profiles = Array.from({ length: 20 }).map((_, i) => {
+const profiles = Array.from({ length: 22 }).map((_, i) => {
   const first = baseNames[i % baseNames.length];
   const last = surnames[i % surnames.length];
   const name = `${first} ${last}`;
@@ -84,9 +86,9 @@ function ProfileCard({ item, onPress }) {
         ) : (
           <View style={styles.cardImage}>
             <Image
-              source={{ uri: item.img }}
+              source={typeof item.img === 'string' ? { uri: item.img } : item.img}
               style={StyleSheet.absoluteFillObject}
-              resizeMode="cover"
+              resizeMode= "none"
               onError={() => setFailed(true)}
             />
             <LinearGradient
@@ -260,11 +262,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cardImage: {
-    height: 200,
+    height: 260,
     borderTopLeftRadius: RADIUS,
     borderTopRightRadius: RADIUS,
     overflow: 'hidden',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardFallbackText: {
     color: '#E5E7EB',
@@ -295,32 +298,44 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   cardFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 10,
     paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(15,23,42,0.95)',
+    backgroundColor: 'transparent',
+    zIndex: 10,
   },
   cardName: {
-    color: '#F9FAFB',
+    color: '#0fd40fff',
     fontWeight: '700',
     fontSize: 14,
     flex: 1,
     marginRight: 8,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   viewerPill: {
+    color: '#0fd40fff',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15,23,42,0.9)',
+    backgroundColor: 'transparent',
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   viewerText: {
-    color: '#E5E7EB',
+    color: '#0fd40fff',
     fontWeight: '600',
     fontSize: 12,
     marginLeft: 4,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });
