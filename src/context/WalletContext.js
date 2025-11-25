@@ -10,6 +10,9 @@ export function WalletProvider({ children }) {
   const [user, setUser] = useState(null);
   const [diamonds, setDiamonds] = useState(0);
   const [liveRooms, setLiveRooms] = useState([]);
+  const [unreadMessages, setUnreadMessages] = useState(true);
+  const [globalCallVisible, setGlobalCallVisible] = useState(false);
+  const [globalCallIndex, setGlobalCallIndex] = useState(0);
 
   React.useEffect(() => {
     (async () => {
@@ -19,6 +22,7 @@ export function WalletProvider({ children }) {
         setGender(parsed.gender ?? null);
         setUser(parsed.user ?? null);
         setDiamonds(parsed.diamonds ?? 0);
+        setUnreadMessages(parsed.unreadMessages ?? true);
       }
     })();
   }, []);
@@ -27,11 +31,37 @@ export function WalletProvider({ children }) {
     const persist = async () => {
       await AsyncStorage.setItem(
         'wallet',
-        JSON.stringify({ gender, user, diamonds })
+        JSON.stringify({ gender, user, diamonds, unreadMessages })
       );
     };
     persist();
-  }, [gender, user, diamonds]);
+  }, [gender, user, diamonds, unreadMessages]);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (!globalCallVisible && liveRooms && liveRooms.length > 0) {
+        setGlobalCallIndex((i) => (i + 1) % liveRooms.length);
+        setGlobalCallVisible(true);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [globalCallVisible, liveRooms]);
+
+  React.useEffect(() => {
+    if (globalCallVisible) {
+      const t = setTimeout(() => setGlobalCallVisible(false), 90000);
+      return () => clearTimeout(t);
+    }
+  }, [globalCallVisible]);
+
+  React.useEffect(() => {
+    if (globalCallVisible && liveRooms && liveRooms.length > 0) {
+      const rotate = setInterval(() => {
+        setGlobalCallIndex((i) => (i + 1) % liveRooms.length);
+      }, 10000);
+      return () => clearInterval(rotate);
+    }
+  }, [globalCallVisible, liveRooms]);
 
   React.useEffect(() => {
     const syncUser = async () => {
@@ -86,8 +116,14 @@ export function WalletProvider({ children }) {
       consumeDiamonds,
       liveRooms,
       setLiveRooms,
+      unreadMessages,
+      setUnreadMessages,
+      globalCallVisible,
+      setGlobalCallVisible,
+      globalCallIndex,
+      setGlobalCallIndex,
     }),
-    [gender, user, diamonds, liveRooms]
+    [gender, user, diamonds, liveRooms, unreadMessages, globalCallVisible, globalCallIndex]
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

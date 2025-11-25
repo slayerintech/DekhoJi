@@ -11,6 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
+import { Animated, Easing } from 'react-native';
  
 
 const baseNames = [
@@ -20,20 +21,20 @@ const baseNames = [
 const surnames = ['Sharma', 'Kumari', 'Patel', 'Kaur', 'Das', 'Reddy', 'Joshi', 'Pandey', 'Verma', 'Gupta'];
 
 const girlImages = [
+  require('../../assets/img12.jpeg'),
+  require('../../assets/img22.jpeg'),
+  require('../../assets/img10.jpeg'),
+  require('../../assets/img14.jpeg'),
   require('../../assets/img1.jpeg'),
-  require('../../assets/img2.png'),
-  require('../../assets/img3.jpeg'),
-  require('../../assets/img4.jpeg'),
-  require('../../assets/img5.jpeg'),
   require('../../assets/img6.jpeg'),
   require('../../assets/img7.jpeg'),
   require('../../assets/img8.jpeg'),
   require('../../assets/img9.jpeg'),
-  require('../../assets/img10.jpeg'),
+  require('../../assets/img3.jpeg'),
   require('../../assets/img11.jpeg'),
-  require('../../assets/img12.jpeg'),
+  require('../../assets/img5.jpeg'),
   require('../../assets/img13.jpeg'),
-  require('../../assets/img14.jpeg'),
+  require('../../assets/img4.jpeg'),
   require('../../assets/img15.jpeg'),
   require('../../assets/img16.jpeg'),
   require('../../assets/img17.jpeg'),
@@ -88,7 +89,7 @@ function ProfileCard({ item, onPress }) {
             <Image
               source={typeof item.img === 'string' ? { uri: item.img } : item.img}
               style={StyleSheet.absoluteFillObject}
-              resizeMode= "none"
+              resizeMode="none"
               onError={() => setFailed(true)}
             />
             <LinearGradient
@@ -110,13 +111,18 @@ function ProfileCard({ item, onPress }) {
           <Text style={styles.liveText}>{item.live ? 'LIVE' : 'OFFLINE'}</Text>
         </View>
 
+        <View style={[styles.viewerPill, styles.viewerTop]}>
+          <Ionicons name="eye" size={14} color="#F9FAFB" />
+          <Text style={styles.viewerText}>{fmt(item.viewers)}</Text>
+        </View>
+
         <View style={styles.cardFooter}>
           <Text numberOfLines={1} style={styles.cardName}>
             {item.name}
           </Text>
-          <View style={styles.viewerPill}>
-            <Ionicons name="eye" size={14} color="#F9FAFB" />
-            <Text style={styles.viewerText}>{fmt(item.viewers)}</Text>
+          <View style={styles.locationPill}>
+            <Text style={styles.locationFlag}>🇮🇳</Text>
+            <Text style={styles.locationText}>India</Text>
           </View>
         </View>
       </View>
@@ -125,13 +131,33 @@ function ProfileCard({ item, onPress }) {
 }
 
 export default function HomeScreen({ navigation }) {
-  const { diamonds, setLiveRooms } = useWallet();
+  const { diamonds, setLiveRooms, globalCallVisible, globalCallIndex, liveRooms } = useWallet();
   const insets = useSafeAreaInsets();
+  const bannerY = React.useRef(new Animated.Value(-80)).current;
+  const bannerOpacity = React.useRef(new Animated.Value(0)).current;
+  const iconScale = React.useRef(new Animated.Value(1)).current;
   
 
   useEffect(() => {
     setLiveRooms(profiles.filter((p) => p.live));
   }, [setLiveRooms]);
+
+  useEffect(() => {
+    if (globalCallVisible) {
+      bannerY.setValue(-80);
+      bannerOpacity.setValue(0);
+      Animated.parallel([
+        Animated.timing(bannerY, { toValue: 0, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(bannerOpacity, { toValue: 1, duration: 400, easing: Easing.ease, useNativeDriver: true }),
+      ]).start();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(iconScale, { toValue: 1.12, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(iconScale, { toValue: 1.0, duration: 600, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        ])
+      ).start();
+    }
+  }, [globalCallVisible, globalCallIndex]);
 
   const renderItem = ({ item }) => (
     <ProfileCard
@@ -142,6 +168,24 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {globalCallVisible && (
+        <Animated.View style={{ position: 'absolute', top: (insets.top || 0) + 8, left: 12, right: 12, transform: [{ translateY: bannerY }], opacity: bannerOpacity, zIndex: 50 }}>
+          <Pressable onPress={() => navigation.navigate('Purchase')}>
+            <LinearGradient colors={["#0f172a", "#1f2937", "#065f46"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, paddingVertical: 14, paddingHorizontal: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={typeof (liveRooms[globalCallIndex]?.img) === 'string' ? { uri: liveRooms[globalCallIndex]?.img } : liveRooms[globalCallIndex]?.img} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>Incoming Video Call</Text>
+                  <Text style={{ color: '#FDE68A', fontSize: 13 }}>{liveRooms[globalCallIndex]?.name || 'Host'} is calling…</Text>
+                </View>
+                <Animated.View style={{ transform: [{ scale: iconScale }] }}>
+                  <Ionicons name="videocam" size={36} color="#22c55e" />
+                </Animated.View>
+              </View>
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
+      )}
       <LinearGradient
         colors={['#140014', '#19053a', '#cb00a2']}
         start={{ x: 0, y: 0 }}
@@ -170,7 +214,7 @@ export default function HomeScreen({ navigation }) {
               end={{ x: 1, y: 1 }}
               style={styles.balanceGradient}
             >
-              <Ionicons name="diamond" size={16} color="#FDE68A" />
+              <Ionicons name="diamond" size={20} color="#FDE68A" />
               <Text style={styles.balanceText}>{diamonds}</Text>
             </LinearGradient>
           </Pressable>
@@ -201,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#020617',
   },
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingBottom: 12,
   },
   headerRow: {
@@ -227,8 +271,8 @@ const styles = StyleSheet.create({
   balanceGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(248,250,252,0.12)',
@@ -236,11 +280,11 @@ const styles = StyleSheet.create({
   balanceText: {
     color: '#F9FAFB',
     marginLeft: 6,
-    fontWeight: '600',
-    fontSize: 14,
+    fontWeight: '800',
+    fontSize: 18,
   },
   listContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 6,
     paddingTop: 12,
   },
   columnWrapper: {
@@ -249,7 +293,7 @@ const styles = StyleSheet.create({
   cardWrapper: {
     flex: 1,
     marginBottom: 16,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
   },
   card: {
     borderRadius: RADIUS,
@@ -278,15 +322,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
   },
   liveDot: {
-    width: 6,
-    height: 6,
+    width: 8,
+    height: 8,
     borderRadius: 999,
     backgroundColor: '#FEE2E2',
     marginRight: 5,
@@ -294,8 +338,13 @@ const styles = StyleSheet.create({
   liveText: {
     color: '#F9FAFB',
     fontWeight: '800',
-    fontSize: 11,
+    fontSize: 13,
     letterSpacing: 0.6,
+  },
+  viewerTop: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
   cardFooter: {
     position: 'absolute',
@@ -320,14 +369,38 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  viewerPill: {
-    color: '#0fd40fff',
+  locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderRadius: 999,
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(225,29,72,0.18)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(225,29,72,0.35)',
+  },
+  locationText: {
+    color: '#FDE68A',
+    fontWeight: '700',
+    fontSize: 11,
+    marginLeft: 4,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  locationFlag: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  viewerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(225,29,72,0.18)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(225,29,72,0.35)',
   },
   viewerText: {
     color: '#0fd40fff',

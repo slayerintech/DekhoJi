@@ -77,7 +77,7 @@ export default function LoginScreen({ navigation }) {
         <BlurView intensity={20} tint="dark" style={styles.blur}>
           <LinearGradient
             colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.6)']}
-            style={[styles.gradient, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20 }]}
+            style={[styles.gradient, { paddingTop: insets.top - 62, paddingBottom: insets.bottom + 52 }]}
           >
             {/* central content */}
             <View style={styles.centerWrap}>

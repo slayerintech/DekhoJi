@@ -10,20 +10,20 @@ import { Ionicons } from '@expo/vector-icons';
 // -----------------------------------------------------------
 
 const initialMessages = [
-    { id: '1', user: 'PriyaLover', message: 'Can you say hi to me?' },
-    { id: '2', user: 'GoldUser', message: 'Sending a virtual 🌹!' },
-    { id: '3', user: 'ViewerX', message: 'What time are you starting your video chat?' },
-    { id: '4', user: 'VipFan', message: 'Hello! You look amazing today! ✨' },
-    { id: '5', user: 'User123', message: 'Hiii, how are you?' },
+    { id: '1', user: 'PriyaLover', message: ' Can you say hi to me?' },
+    { id: '2', user: 'GoldUser', message: ' Sending a virtual 🌹!' },
+    { id: '3', user: 'ViewerX', message: ' What time are you starting your video chat?' },
+    { id: '4', user: 'VipFan', message: ' Hello! You look amazing today! ✨' },
+    { id: '5', user: 'User123', message: ' Hiii, how are you?' },
 ];
 
 const newMessagesPool = [
-    { user: 'NewUser', message: 'Wow! So pretty!' },
-    { user: 'Guest01', message: 'How much for 10 minutes?' },
-    { user: 'Sumer', message: 'Great stream quality.' },
-    { user: 'DiamondsFan', message: 'Do you offer private chat?' },
-    { user: 'Viewer45', message: 'Just joined the live!' },
-    { user: 'Commenter', message: 'I love your background.' },
+    { user: 'NewUser ', message: ' Wow! So pretty!' },
+    { user: 'Guest01 ', message: ' How much for 10 minutes?' },
+    { user: 'Sumer ', message: ' Great stream quality.' },
+    { user: 'DiamondsFan ', message: ' Do you offer private chat?' },
+    { user: 'Viewer45 ', message: ' Just joined the live!' },
+    { user: 'Commenter ', message: ' I love your background.' },
 ];
 
  
@@ -97,7 +97,12 @@ export default function LiveWatchScreen({ navigation, route }) {
                         <Text style={styles.fallbackText}>Live Preview Unavailable</Text>
                     </LinearGradient>
                 ) : (
-                    <Image source={{ uri: profile.img }} style={styles.videoImage} onError={() => setFailed(true)} />
+                    <Image
+                        source={typeof profile.img === 'string' ? { uri: profile.img } : profile.img}
+                        style={styles.videoImage}
+                        resizeMode="cover"
+                        onError={() => setFailed(true)}
+                    />
                 )}
 
                 {/* Top Overlay: Back Button and Live Badge */}

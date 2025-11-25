@@ -5,12 +5,15 @@ import PurchaseScreen from '../screens/PurchaseScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import { useWallet } from '../context/WalletContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
 export default function BoyTabs() {
   const insets = useSafeAreaInsets();
+  const { unreadMessages } = useWallet();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -27,6 +30,14 @@ export default function BoyTabs() {
             Profile: 'person',
           };
           const name = map[route.name] || 'ellipse';
+          if (route.name === 'Messages' && unreadMessages) {
+            return (
+              <View style={{ width: size + 8, height: size + 8 }}>
+                <Ionicons name={name} color={color} size={size} />
+                <View style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' }} />
+              </View>
+            );
+          }
           return <Ionicons name={name} color={color} size={size} />;
         },
       })}
