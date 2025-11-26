@@ -1,66 +1,50 @@
-import React from 'react'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
-import { ScrollView, Text, View } from 'react-native'
+import React from 'react';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, Alert, Linking } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 
-export default function PrivacyPolicyScreen() {
-  const insets = useSafeAreaInsets()
+const POLICY_URL = 'https://slayerintech.github.io/DekhoJi/privacy-policy.html';
+
+export default function PrivacyPolicyScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+
+  const openPolicy = async () => {
+    try {
+      const result = await WebBrowser.openBrowserAsync(POLICY_URL);
+      if (result?.type === 'cancel' || result?.type === 'dismiss') {
+        // user closed; nothing else
+      }
+    } catch (e) {
+      try {
+        await Linking.openURL(POLICY_URL);
+      } catch {
+        Alert.alert('Unable to open', 'Please copy and open this link in your browser:\n' + POLICY_URL);
+      }
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
-      <LinearGradient colors={["#1a0208ff", "#19053aff", "#cb00a2ff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 16, paddingTop: insets.top + 12, paddingBottom: 12 }}>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>Privacy Policy</Text>
-      </LinearGradient>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Overview</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>DekhoJi respects your privacy. This policy explains what data we collect, how we use it, and your choices.</Text>
-        </View>
+      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 24, paddingBottom: 12 }}>
+        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>Privacy Policy</Text>
+        <Text style={{ color: '#bbb', marginTop: 8 }}>Read DekhoJi’s privacy practices at the official page.</Text>
+      </View>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Information We Collect</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>Account data such as name, email, and avatar you provide. Usage data such as app interactions, session events, and device identifiers. Purchase data limited to products purchased and related receipts required to fulfill orders. We do not collect sensitive personal information.</Text>
-        </View>
+      <View style={{ paddingHorizontal: 24 }}>
+        <Pressable onPress={openPolicy}>
+          <LinearGradient colors={['#0ea5e9', '#22c55e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ borderRadius: 14, paddingVertical: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+            <Ionicons name="shield-checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>Open Privacy Policy</Text>
+          </LinearGradient>
+        </Pressable>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>How We Use Data</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>To provide and improve the service, sync your diamonds and profile, process purchases, prevent abuse, and comply with legal requirements. We may use aggregated and anonymized analytics to understand app performance.</Text>
+        <View style={{ marginTop: 18, backgroundColor: '#1c1c1c', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#333' }}>
+          <Text style={{ color: '#9ca3af', fontSize: 13 }}>Link:</Text>
+          <Text selectable style={{ color: '#60a5fa', marginTop: 4 }}>{POLICY_URL}</Text>
         </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Payments</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>Digital goods are sold via Google Play Billing. We do not handle your card or UPI details. We store only the minimal purchase metadata necessary to deliver diamonds and support your account.</Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Data Storage and Security</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>We use Firebase services and local storage to sync and persist your data. We apply reasonable safeguards to protect information. No method of transmission or storage is 100% secure, but we strive to use industry-standard practices.</Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Sharing</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>We do not sell your personal data. We may share with service providers only for app functionality (for example, Firebase) under appropriate agreements and as required by law.</Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Your Choices</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>You can update profile information in the app, sign out, or request deletion of your account. To opt out of analytics, you can disable ad personalization in your device account settings.</Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Children</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>DekhoJi is intended for adults. Users must be 18+ and confirm age before using the app.</Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Contact</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>For privacy questions or requests, contact support at support@dekhoji.app.</Text>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Updates</Text>
-          <Text style={{ color: '#bbb', marginTop: 6 }}>We may update this policy. Continued use of the app means you accept the current policy. Last updated on the date of your app build.</Text>
-        </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
-  )
+  );
 }
