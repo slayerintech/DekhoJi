@@ -1,0 +1,22 @@
+workflows:
+  android_debug:
+    name: Android Debug APK
+    environment:
+      vars:
+        NODE_VERSION: 18
+    scripts:
+      - name: Install Node
+        script: |
+          echo "Using Node $NODE_VERSION"
+      - name: Install dependencies
+        script: |
+          npm ci
+      - name: Prebuild Android
+        script: |
+          npx expo prebuild --platform android
+      - name: Build debug APK
+        script: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+    artifacts:
+      - android/app/build/outputs/apk/debug/app-debug.apk
