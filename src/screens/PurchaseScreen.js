@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Pressable, Text, View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as IAP from 'react-native-iap';
 
  
 
@@ -87,34 +88,32 @@ export default function PurchaseScreen({ navigation }) {
     const { creditDiamonds } = useWallet();
     const [selected, setSelected] = useState(packs[0]);
     const [iapReady, setIapReady] = useState(false);
-    const [iapModule, setIapModule] = useState(null);
     const [products, setProducts] = useState([]);
     const insets = useSafeAreaInsets();
+    const purchaseUpdateSub = useRef(null);
+    const purchaseErrorSub = useRef(null);
 
     React.useEffect(() => {
       (async () => {
-        let IAP;
-        try { IAP = require('expo-in-app-purchases'); } catch {}
-        if (!IAP) { return; }
-        setIapModule(IAP);
         try {
-          await IAP.connectAsync();
+          const ok = await IAP.initConnection();
+          if (!ok) return;
           const ids = packs.map((p) => skuForDiamonds(p.diamonds)).filter(Boolean);
-          const res = await IAP.getProductsAsync(ids);
-          setProducts(res?.results || []);
-          IAP.setPurchaseListener(async ({ responseCode, results }) => {
-            if (responseCode === IAP.IAPResponseCode.OK) {
-              for (const purchase of results) {
-                if (purchase && purchase.acknowledged === false) {
-                  const d = diamondsForSku(purchase.productId);
-                  if (d) {
-                    await creditDiamonds(d);
-                    Alert.alert('Purchase successful', `Added ${d} diamonds.`);
-                  }
-                  try { await IAP.finishTransactionAsync(purchase, true); } catch {}
-                }
+          const res = await IAP.getProducts(ids);
+          setProducts(res || []);
+          purchaseUpdateSub.current = IAP.purchaseUpdatedListener(async (purchase) => {
+            const receipt = purchase?.transactionReceipt;
+            if (receipt) {
+              const d = diamondsForSku(purchase.productId);
+              if (d) {
+                await creditDiamonds(d);
+                Alert.alert('Purchase successful', `Added ${d} diamonds.`);
               }
-            } else if (responseCode === IAP.IAPResponseCode.USER_CANCELED) {
+              try { await IAP.finishTransaction(purchase, true); } catch {}
+            }
+          });
+          purchaseErrorSub.current = IAP.purchaseErrorListener((error) => {
+            if (error?.code === 'E_USER_CANCELLED') {
               Alert.alert('Purchase canceled', 'Transaction canceled');
             } else {
               Alert.alert('Purchase failed', 'Unable to complete purchase');
@@ -124,20 +123,26 @@ export default function PurchaseScreen({ navigation }) {
         } catch {}
       })();
       return () => {
-        (async () => {
-          try { if (iapModule?.disconnectAsync) await iapModule.disconnectAsync(); } catch {}
-        })();
+        try { purchaseUpdateSub.current?.remove(); } catch {}
+        try { purchaseErrorSub.current?.remove(); } catch {}
+        try { IAP.endConnection(); } catch {}
       };
     }, []);
 
     const buyNow = async () => {
       const sku = skuForDiamonds(selected.diamonds);
-      if (!iapReady || !iapModule || !sku) {
+      if (!iapReady || !sku) {
         Alert.alert('Purchases unavailable', 'Use a development or production build to buy.');
         return;
       }
       try {
-        await iapModule.purchaseItemAsync(sku);
+        if (typeof IAP.requestPurchase === 'function') {
+          await IAP.requestPurchase(sku);
+        } else if (typeof IAP.requestPurchaseSku === 'function') {
+          await IAP.requestPurchaseSku(sku);
+        } else {
+          await IAP.requestPurchase({ skus: [sku] });
+        }
       } catch {
         Alert.alert('Purchase failed', 'Unable to initiate purchase');
       }
