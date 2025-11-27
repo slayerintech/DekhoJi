@@ -32,7 +32,6 @@
     "plugins": [
       "expo-web-browser",
       "expo-font",
-      "react-native-iap",
       [
         "expo-build-properties",
         {
