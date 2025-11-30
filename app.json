@@ -2,7 +2,7 @@
   "expo": {
     "name": "DekhoJi",
     "slug": "DekhoJi",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -23,8 +23,16 @@
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "package": "com.slayer.dekhoji",
-      "versionCode": 1,
-      "permissions": []
+      "versionCode": 6,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "VIBRATE",
+        "INTERNET",
+        "WAKE_LOCK",
+        "ACCESS_NETWORK_STATE",
+        "MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/icon.png"
@@ -36,7 +44,10 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.1.20"
+            "kotlinVersion": "2.1.20",
+            "extraGradleProperties": {
+              "expo.iap.playStore": "true"
+            }
           }
         }
       ]
