@@ -23,7 +23,7 @@
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "package": "com.slayer.dekhoji",
-      "versionCode": 6,
+      "versionCode": 8,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
@@ -44,10 +44,7 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.1.20",
-            "extraGradleProperties": {
-              "expo.iap.playStore": "true"
-            }
+            "kotlinVersion": "2.1.20"
           }
         }
       ]
