@@ -8,7 +8,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 export default function MessagesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { liveRooms, unreadMessages, setUnreadMessages } = useWallet();
+  const { liveRooms, unreadMessages, setUnreadMessages, user } = useWallet();
   const isFocused = useIsFocused();
   const [idx, setIdx] = useState(0);
 
@@ -54,15 +54,19 @@ export default function MessagesScreen({ navigation }) {
     if (!isFocused) return;
     if (unreadMessages) setUnreadMessages(false);
     
-    setMessages([{ id: '1', text: 'Hii ✨', icon: 'star', time: 'Just now' }]);
+    // 1 - Hii "User name"
+    const userName = user?.name ? user.name.split(' ')[0] : 'Handsome';
+    setMessages([{ id: '1', text: `Hii ${userName} 😍`, icon: 'star', time: 'Just now' }]);
     setCallIncoming(false);
     
-    const namePart = (profile?.name || '').split(' ')[0] || 'Baby';
     const timers = [];
     
-    timers.push(setTimeout(() => setMessages((m) => [...m, { id: '2', text: `Hii handsome 😘`, icon: 'heart', time: 'Just now' }]), 1500));
-    timers.push(setTimeout(() => setMessages((m) => [...m, { id: '3', text: `Want to see me, ${namePart}? 😉`, icon: 'eye', time: 'Just now' }]), 3200));
-    timers.push(setTimeout(() => setMessages((m) => [...m, { id: '4', text: `Call me to watch my live 🎥`, icon: 'videocam', time: 'Just now' }]), 5000));
+    // 2 - i Am live now
+    timers.push(setTimeout(() => setMessages((m) => [...m, { id: '2', text: `I am live now 💦`, icon: 'heart', time: 'Just now' }]), 1500));
+    // 3 - Do you want to see me
+    timers.push(setTimeout(() => setMessages((m) => [...m, { id: '3', text: `Do you want to see me? 🍑`, icon: 'eye', time: 'Just now' }]), 3200));
+    // 4 - join my live to see me and talk with with
+    timers.push(setTimeout(() => setMessages((m) => [...m, { id: '4', text: `Join my live to see me and talk with me 👀`, icon: 'videocam', time: 'Just now' }]), 5000));
     timers.push(setTimeout(() => setCallIncoming(true), 5600));
     
     return () => { timers.forEach((t) => clearTimeout(t)); };
@@ -119,8 +123,8 @@ export default function MessagesScreen({ navigation }) {
               <View style={styles.bannerContent}>
                 <Image source={typeof profile.img === 'string' ? { uri: profile.img } : profile.img} style={styles.bannerAvatar} />
                 <View style={styles.bannerTextContainer}>
-                  <Text style={styles.bannerTitle}>Incoming Video Call</Text>
-                  <Text style={styles.bannerSubtitle}>Tap to connect now...</Text>
+                  <Text style={styles.bannerTitle}>Live Now</Text>
+                  <Text style={styles.bannerSubtitle}>Tap to connect now</Text>
                 </View>
                 <Animated.View style={[styles.callIconContainer, { transform: [{ scale: iconScale }] }]}>
                   <Ionicons name="videocam" size={24} color="#fff" />
@@ -151,10 +155,8 @@ export default function MessagesScreen({ navigation }) {
             {messages.map((m) => (
             <View key={m.id} style={styles.messageRow}>
                 <Image source={typeof profile.img === 'string' ? { uri: profile.img } : profile.img} style={styles.msgAvatar} />
-                <View>
-                    <View style={styles.bubble}>
-                        <Text style={styles.bubbleText}>{m.text}</Text>
-                    </View>
+                <View style={styles.bubble}>
+                    <Text style={styles.bubbleText}>{m.text}</Text>
                 </View>
             </View>
             ))}
@@ -167,13 +169,13 @@ export default function MessagesScreen({ navigation }) {
         <Animated.View style={{ transform: [{ scale: startCallScale }] }}>
           <Pressable onPress={() => navigation.navigate('Purchase', { from: 'Messages' })} style={styles.videoCallBtn}>
             <LinearGradient
-              colors={['#22c55e', '#16a34a']}
+              colors={['#ff529f', '#e91e63']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.gradientBtn}
             >
               <Ionicons name="videocam" size={20} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.btnText}>Start Video Call</Text>
+              <Text style={styles.btnText}>Join Live Now</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -200,8 +202,8 @@ const styles = StyleSheet.create({
   bannerContent: { flexDirection: 'row', alignItems: 'center' },
   bannerAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12, borderWidth: 2, borderColor: '#ff529f' },
   bannerTextContainer: { flex: 1 },
-  bannerTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 2 },
-  bannerSubtitle: { color: '#ff529f', fontSize: 12, fontWeight: '600' },
+  bannerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 2 },
+  bannerSubtitle: { color: '#ff529f', fontSize: 14, fontWeight: '600' },
   callIconContainer: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#22c55e', alignItems: 'center', justifyContent: 'center' },
 
   scrollContent: { paddingBottom: 100 },
@@ -224,16 +226,14 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#1a1a1a', width: '100%', marginBottom: 20 },
 
   messagesList: { paddingHorizontal: 16, paddingTop: 20 },
-  messageRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 12 },
+  messageRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 24 },
   msgAvatar: { width: 30, height: 30, borderRadius: 15, marginRight: 10, marginBottom: 4 },
   bubble: { 
     backgroundColor: '#262626', 
     paddingHorizontal: 16, 
     paddingVertical: 12, 
     borderRadius: 22, 
-    maxWidth: '75%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    maxWidth: '85%',
   },
   bubbleText: { color: '#fff', fontSize: 15, lineHeight: 22, fontWeight: '400' },
   timestamp: { display: 'none' }, // Instagram hides timestamps by default usually, or we can make it very subtle

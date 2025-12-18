@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }) {
   const [mode, setMode] = React.useState('login');
   React.useEffect(() => {
     GoogleSignin.configure({
-      webClientId: '1014858874602-cm9o4k5jten01ftdutmfu0c43rorqrt5.apps.googleusercontent.com', // <--- PASTE IT HERE
+      webClientId: '1014858874602-cm9o4k5jten01ftdutmfu0c43rorqrt5.apps.googleusercontent.com',
     });
   }, []);
 

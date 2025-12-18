@@ -162,7 +162,18 @@ export default function LiveWatchScreen({ navigation, route }) {
                             placeholderTextColor="#666"
                             style={styles.commentInput}
                         />
-                        <Pressable style={styles.sendButton} onPress={() => setComment('')}>
+                        <Pressable style={styles.sendButton} onPress={() => {
+                            if (comment.trim().length === 0) return;
+                            Alert.alert(
+                                'Join Live',
+                                'Join live to talk directly with the host!',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Join Now', onPress: () => navigation.navigate('Purchase', { from: 'LiveWatch' }) }
+                                ]
+                            );
+                            setComment('');
+                        }}>
                             <Ionicons name="send" size={16} color="#fff" />
                         </Pressable>
                     </View>

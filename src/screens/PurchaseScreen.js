@@ -147,19 +147,12 @@ export default function PurchaseScreen({ navigation }) {
       await Linking.openURL(url);
       setPendingTxn(selected);
     } catch (err) {
-      console.log("UPI open error:", err);
+      // console.log("UPI open error:", err);
       Alert.alert(
         "Payment Method",
-        "No UPI apps found on this device. (Simulator Mode)",
+        "No UPI apps found on this device. Please install PhonePe, GPay, or Paytm to continue.",
         [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Simulate Success", 
-            onPress: () => {
-              creditDiamonds(selected.diamonds, selected.label);
-              Alert.alert("Simulated", `Credited ${selected.diamonds} diamonds (Test Mode)`);
-            }
-          }
+          { text: "OK", style: "cancel" }
         ]
       );
     }
@@ -195,9 +188,16 @@ export default function PurchaseScreen({ navigation }) {
              <Text style={styles.totalPrice}>₹{selected.price}</Text>
          </View>
          <Animated.View style={{ transform: [{ scale: payScale }] }}>
-            <Pressable onPress={buyNow} style={({ pressed }) => [styles.payBtn, { opacity: pressed ? 0.9 : 1 }]}>
-                <Text style={styles.payBtnText}>Pay Now</Text>
-                <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Pressable onPress={buyNow} style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
+                <LinearGradient
+                    colors={['#ff529f', '#e91e63']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.payBtn}
+                >
+                    <Text style={styles.payBtnText}>Pay Now</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#fff" />
+                </LinearGradient>
             </Pressable>
          </Animated.View>
       </View>
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   totalLabel: { color: '#888', fontSize: 12 },
   totalPrice: { color: '#fff', fontSize: 22, fontWeight: '700' },
   payBtn: {
-    backgroundColor: '#00cc66', // Green color
+    // backgroundColor: '#00cc66', // Green color
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 30,
