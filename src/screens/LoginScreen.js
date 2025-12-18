@@ -1,4 +1,3 @@
-// LoginScreen.js
 import React from 'react';
 import {
   Alert,
@@ -8,16 +7,15 @@ import {
   Text,
   View,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { NativeModules, Platform } from 'react-native';
 import { useWallet } from '../context/WalletContext';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
 export default function LoginScreen({ navigation }) {
@@ -25,9 +23,39 @@ export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  React.useEffect(() => {}, []);
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [mode, setMode] = React.useState('login');
+  React.useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: '1014858874602-cm9o4k5jten01ftdutmfu0c43rorqrt5.apps.googleusercontent.com', // <--- PASTE IT HERE
+    });
+  }, []);
 
-  const continueGoogle = async () => {};
+  const continueGoogle = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (response && response.data && response.data.idToken) {
+        const idToken = response.data.idToken;
+        const credential = GoogleAuthProvider.credential(idToken);
+        const cred = await signInWithCredential(auth, credential);
+        const u = cred.user;
+        setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'google' });
+        navigation.replace('Home');
+      }
+    } catch (error) {
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        // cancelled
+      } else if (error.code === 'IN_PROGRESS') {
+        // in progress
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        Alert.alert('Google Login', 'Play services not available');
+      } else {
+        Alert.alert('Google Login', 'Login failed. Try again.');
+        console.error(error);
+      }
+    }
+  };
 
   const continueEmail = async () => {
     const em = email.trim();
@@ -35,107 +63,185 @@ export default function LoginScreen({ navigation }) {
     const okEmail = /.+@.+\..+/.test(em);
     if (!okEmail) { Alert.alert('Email Login', 'Enter a valid email.'); return; }
     if (!pw || pw.length < 6) { Alert.alert('Email Login', 'Password must be at least 6 characters.'); return; }
-    try {
-      const cred = await signInWithEmailAndPassword(auth, em, pw);
-      const u = cred.user;
-      setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'email' });
-      navigation.replace('Home');
-    } catch (e) {
+    if (mode === 'login') {
       try {
-        const credNew = await createUserWithEmailAndPassword(auth, em, pw);
-        const u = credNew.user;
+        const cred = await signInWithEmailAndPassword(auth, em, pw);
+        const u = cred.user;
         setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'email' });
         navigation.replace('Home');
       } catch (err) {
         const code = err?.code || '';
-        if (code === 'auth/email-already-in-use') {
-          Alert.alert('Email Login', 'Email already exists. Check your password.');
+        if (code === 'auth/user-not-found') {
+          Alert.alert('Email Login', 'No account found with this email. Sign up first.');
+        } else if (code === 'auth/wrong-password') {
+          Alert.alert('Email Login', 'Incorrect password. Try again.');
         } else if (code === 'auth/invalid-email') {
           Alert.alert('Email Login', 'Invalid email address.');
-        } else if (code === 'auth/weak-password') {
-          Alert.alert('Email Login', 'Weak password. Use at least 6 characters.');
         } else if (code === 'auth/network-request-failed') {
           Alert.alert('Email Login', 'Network error. Check Firebase config and internet.');
         } else {
-          Alert.alert('Email Login', 'Unable to login or register.');
+          Alert.alert('Email Login', 'Unable to login. Try again later.');
         }
+      }
+      return;
+    }
+    if (!confirmPassword || confirmPassword.length < 6) {
+      Alert.alert('Sign Up', 'Confirm password must be at least 6 characters.');
+      return;
+    }
+    if (confirmPassword !== pw) {
+      Alert.alert('Sign Up', 'Password and confirm password do not match.');
+      return;
+    }
+    try {
+      const credNew = await createUserWithEmailAndPassword(auth, em, pw);
+      const u = credNew.user;
+      setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'email' });
+      navigation.replace('Home');
+    } catch (err) {
+      try {
+        const code = err?.code || '';
+        if (code === 'auth/email-already-in-use') {
+          Alert.alert('Sign Up', 'Email already exists. Try logging in instead.');
+        } else if (code === 'auth/invalid-email') {
+          Alert.alert('Sign Up', 'Invalid email address.');
+        } else if (code === 'auth/weak-password') {
+          Alert.alert('Sign Up', 'Weak password. Use at least 6 characters.');
+        } else if (code === 'auth/network-request-failed') {
+          Alert.alert('Sign Up', 'Network error. Check Firebase config and internet.');
+        } else {
+          Alert.alert('Sign Up', 'Unable to create account.');
+        }
+      } catch (e) {
+        Alert.alert('Sign Up', 'Unable to create account.');
       }
     }
   };
 
   
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ImageBackground
+return (
+    <View style={styles.container}>
+      {/* Background Image Absolute Positioned */}
+      <Image
         source={require('../../assets/login-bg.png')}
-        style={styles.bg}
-        imageStyle={styles.bgImage}
+        style={styles.absoluteBg}
         resizeMode="cover"
-      >
-        {/* slight blur for legibility */}
-        <BlurView intensity={20} tint="dark" style={styles.blur}>
-          <LinearGradient
-            colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.6)']}
-            style={[styles.gradient, { paddingTop: insets.top - 62, paddingBottom: insets.bottom + 52 }]}
-          >
-            {/* central content */}
-            <View style={styles.centerWrap}>
-              {/* circular logo similar to screenshot */}
-              <View style={styles.logoBox}>
-                <Image source={require('../../assets/SymbolImage.jpg')} style={styles.logoImage} resizeMode="cover" />
+      />
+
+      {/* Content Overlay */}
+      <BlurView intensity={20} tint="dark" style={styles.blur}>
+        <LinearGradient
+          colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.6)']}
+          style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+        >
+          {/* central content */}
+          <View style={styles.centerWrap}>
+            {/* circular logo similar to screenshot */}
+            <View style={styles.logoBox}>
+              <Image source={require('../../assets/SymbolImage.jpg')} style={styles.logoImage} resizeMode="cover" />
+            </View>
+
+            <Text style={styles.title}>Welcome to DekhoJi</Text>
+            <Text style={styles.subtitle}>The biggest live streaming platform.</Text>
+
+            <View style={styles.card}>
+              <BlurView intensity={30} tint="light" style={styles.cardBlur} />
+              <View style={styles.tabRow}>
+                <Pressable
+                  onPress={() => setMode('login')}
+                  style={[styles.tabButton, mode === 'login' && styles.tabButtonActive]}
+                >
+                  <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Login</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setMode('signup')}
+                  style={[styles.tabButton, mode === 'signup' && styles.tabButtonActive]}
+                >
+                  <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>Sign up</Text>
+                </Pressable>
               </View>
-
-              <Text style={styles.title}>Welcome to Bunny</Text>
-              <Text style={styles.subtitle}>The biggest live streaming platform.</Text>
-
-              <View style={styles.card}>
-                <BlurView intensity={30} tint="light" style={styles.cardBlur} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email"
+                placeholderTextColor="#888"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+              />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder={mode === 'login' ? 'Password' : 'Create password'}
+                placeholderTextColor="#888"
+                secureTextEntry
+                style={styles.input}
+              />
+              {mode === 'signup' && (
                 <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Email"
-                  placeholderTextColor="#888"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                />
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm password"
                   placeholderTextColor="#888"
                   secureTextEntry
                   style={styles.input}
                 />
-                <Pressable
-                  onPress={continueEmail}
-                  style={({ pressed }) => [styles.btnGoogle, pressed && styles.pressed]}
-                >
-                  <Ionicons name="mail" size={20} color="#fff" style={{ marginRight: 12 }} />
-                  <Text style={styles.btnText}>Continue with Email</Text>
-                </Pressable>
+              )}
+              <Pressable
+                onPress={continueEmail}
+                style={({ pressed }) => [styles.btnGoogle, pressed && styles.pressed]}
+              >
+                <Ionicons name="mail" size={20} color="#fff" style={{ marginRight: 12 }} />
+                <Text style={styles.btnText}>{mode === 'login' ? 'Login with Email' : 'Sign up with Email'}</Text>
+              </Pressable>
 
-                
-
-                <Text style={styles.terms}>
-                  By continuing you agree to our <Text style={styles.link} onPress={() => navigation.navigate('Terms')}>Terms and Conditions</Text>
-                </Text>
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
               </View>
 
-              
+              <Pressable
+                onPress={continueGoogle}
+                style={({ pressed }) => [styles.btnGoogleAlt, pressed && styles.pressed]}
+              >
+                <Ionicons name="logo-google" size={20} color="#111" style={{ marginRight: 12 }} />
+                <Text style={styles.btnTextAlt}>{mode === 'login' ? 'Login with Google' : 'Sign up with Google'}</Text>
+              </Pressable>
+
+              <Text style={styles.switchText}>
+                {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                <Text
+                  style={styles.switchLink}
+                  onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                >
+                  {mode === 'login' ? 'Sign up' : 'Login'}
+                </Text>
+              </Text>
+
+              <Text style={styles.terms}>
+                By continuing you agree to our <Text style={styles.link} onPress={() => navigation.navigate('Terms')}>Terms and Conditions</Text>
+              </Text>
             </View>
-          </LinearGradient>
-        </BlurView>
-      </ImageBackground>
-    </SafeAreaView>
+
+            
+          </View>
+        </LinearGradient>
+      </BlurView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#000' },
-  bg: { flex: 1, width: '100%', height: '100%' },
-  bgImage: { transform: [{ scale: 1.2 }] },
+  container: { flex: 1, backgroundColor: '#000' },
+  absoluteBg: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    width: '100%', 
+    height: '100%', 
+    transform: [{ scale: 1.6 }] 
+  },
   blur: { flex: 1 },
   gradient: {
     flex: 1,
@@ -212,6 +318,68 @@ const styles = StyleSheet.create({
   registerRow: { flexDirection: 'row', marginTop: 18 },
   newHere: { color: 'rgba(255,255,255,0.6)', fontSize: 13 },
   registerLink: { color: '#ff2fb0', fontSize: 13, fontWeight: '700' },
+  tabRow: {
+    flexDirection: 'row',
+    width: '100%',
+    marginBottom: 16,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 12,
+    padding: 2,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  tabButtonActive: {
+    backgroundColor: '#ff2fb0',
+  },
+  tabText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 8,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  dividerText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+    marginHorizontal: 8,
+  },
+  btnGoogleAlt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 10,
+    width: '100%',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  btnTextAlt: { color: '#111', fontSize: 16, fontWeight: '700' },
+  switchText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  switchLink: {
+    color: '#ff2fb0',
+    fontWeight: '700',
+  },
   input: {
     backgroundColor: '#1c1c1c',
     borderRadius: 12,

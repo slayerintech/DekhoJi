@@ -9,20 +9,31 @@ export function WalletProvider({ children }) {
   const [gender, setGender] = useState(null);
   const [user, setUser] = useState(null);
   const [diamonds, setDiamonds] = useState(0);
+  const [currentPack, setCurrentPack] = useState('Free Member');
   const [liveRooms, setLiveRooms] = useState([]);
   const [unreadMessages, setUnreadMessages] = useState(true);
   const [globalCallVisible, setGlobalCallVisible] = useState(false);
   const [globalCallIndex, setGlobalCallIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
     (async () => {
-      const saved = await AsyncStorage.getItem('wallet');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setGender(parsed.gender ?? null);
-        setUser(parsed.user ?? null);
-        setDiamonds(parsed.diamonds ?? 0);
-        setUnreadMessages(parsed.unreadMessages ?? true);
+      try {
+        const saved = await AsyncStorage.getItem('wallet');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const u = parsed.user ?? null;
+          setGender(parsed.gender ?? null);
+          setUser(u);
+          // Only restore diamonds/pack if user is logged in
+          setDiamonds(u ? (parsed.diamonds ?? 0) : 0);
+          setCurrentPack(u ? (parsed.currentPack ?? 'Free Member') : 'Free Member');
+          setUnreadMessages(parsed.unreadMessages ?? true);
+        }
+      } catch (e) {
+        // ignore error
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
@@ -31,11 +42,11 @@ export function WalletProvider({ children }) {
     const persist = async () => {
       await AsyncStorage.setItem(
         'wallet',
-        JSON.stringify({ gender, user, diamonds, unreadMessages })
+        JSON.stringify({ gender, user, diamonds, currentPack, unreadMessages })
       );
     };
     persist();
-  }, [gender, user, diamonds, unreadMessages]);
+  }, [gender, user, diamonds, currentPack, unreadMessages]);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -65,32 +76,42 @@ export function WalletProvider({ children }) {
 
   React.useEffect(() => {
     const syncUser = async () => {
-      if (!user || !user.id) return;
+      if (!user || !user.id) {
+        setDiamonds(0);
+        setCurrentPack('Free Member');
+        return;
+      }
       const ref = doc(db, 'users', user.id);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const data = snap.data();
         setDiamonds(typeof data.diamonds === 'number' ? data.diamonds : 0);
+        setCurrentPack(data.currentPack || 'Free Member');
       } else {
         await setDoc(ref, {
           name: user.name || '',
           email: user.email || '',
           avatar: user.avatar || '',
           diamonds: 0,
+          currentPack: 'Free Member',
           createdAt: Date.now(),
         });
         setDiamonds(0);
+        setCurrentPack('Free Member');
       }
     };
     syncUser();
   }, [user]);
 
-  const creditDiamonds = async (count) => {
+  const creditDiamonds = async (count, packName) => {
     setDiamonds((d) => d + count);
+    if (packName) setCurrentPack(packName);
     try {
       if (user && user.id) {
         const ref = doc(db, 'users', user.id);
-        await updateDoc(ref, { diamonds: (diamonds + count) });
+        const updateData = { diamonds: (diamonds + count) };
+        if (packName) updateData.currentPack = packName;
+        await updateDoc(ref, updateData);
       }
     } catch {}
   };
@@ -112,6 +133,7 @@ export function WalletProvider({ children }) {
       user,
       setUser,
       diamonds,
+      currentPack,
       creditDiamonds,
       consumeDiamonds,
       liveRooms,
@@ -122,8 +144,9 @@ export function WalletProvider({ children }) {
       setGlobalCallVisible,
       globalCallIndex,
       setGlobalCallIndex,
+      isLoading,
     }),
-    [gender, user, diamonds, liveRooms, unreadMessages, globalCallVisible, globalCallIndex]
+    [gender, user, diamonds, liveRooms, unreadMessages, globalCallVisible, globalCallIndex, isLoading]
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

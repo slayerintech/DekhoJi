@@ -1,9 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { WalletProvider } from './src/context/WalletContext';
+import { WalletProvider, useWallet } from './src/context/WalletContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
+
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -14,17 +16,27 @@ import PurchaseScreen from './src/screens/PurchaseScreen';
 import BoyTabs from './src/navigation/BoyTabs';
 import TermsScreen from './src/screens/TermsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+import AgeGateScreen from './src/screens/AgeGateScreen';
 
 const Stack = createNativeStackNavigator();
 
-export default function App() {
+function RootNavigator() {
+  const { user, isLoading } = useWallet();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0a0a0a' }}>
+        <ActivityIndicator size="large" color="#e91e63" />
+      </View>
+    );
+  }
+
   return (
-    <WalletProvider>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <StatusBar style="light" />
-          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Login" component={LoginScreen} />
+    <NavigationContainer>
+      <StatusBar style="light" />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <>
             <Stack.Screen name="Home" component={BoyTabs} />
             <Stack.Screen name="GoLive" component={GoLiveScreen} />
             <Stack.Screen name="LiveWatch" component={LiveWatchScreen} />
@@ -32,8 +44,26 @@ export default function App() {
             <Stack.Screen name="Waiting" component={WaitingScreen} />
             <Stack.Screen name="Terms" component={TermsScreen} />
             <Stack.Screen name="Privacy" component={PrivacyPolicyScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="AgeGate" component={AgeGateScreen} />
+            <Stack.Screen name="Terms" component={TermsScreen} />
+            <Stack.Screen name="Privacy" component={PrivacyPolicyScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <WalletProvider>
+      <SafeAreaProvider>
+        <RootNavigator />
       </SafeAreaProvider>
     </WalletProvider>
   );

@@ -2,6 +2,7 @@
   "expo": {
     "name": "DekhoJi",
     "slug": "DekhoJi",
+    "scheme": "dekhoji",
     "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -38,6 +39,7 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
+      "@react-native-google-signin/google-signin",
       "expo-web-browser",
       "expo-font",
       [

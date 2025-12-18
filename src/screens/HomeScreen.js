@@ -6,6 +6,7 @@ import {
   Text,
   View,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,21 +21,21 @@ const baseNames = [
 ];
 const surnames = ['Sharma', 'Kumari', 'Patel', 'Kaur', 'Das', 'Reddy', 'Joshi', 'Pandey', 'Verma', 'Gupta'];
 
+// Static images from assets
 const girlImages = [
-  require('../../assets/img12.jpeg'),
-  require('../../assets/img22.jpeg'),
-  require('../../assets/img10.jpeg'),
-  require('../../assets/img14.jpeg'),
   require('../../assets/img1.jpeg'),
+  require('../../assets/img3.jpeg'),
+  require('../../assets/img4.jpeg'),
+  require('../../assets/img5.jpeg'),
   require('../../assets/img6.jpeg'),
   require('../../assets/img7.jpeg'),
   require('../../assets/img8.jpeg'),
   require('../../assets/img9.jpeg'),
-  require('../../assets/img3.jpeg'),
+  require('../../assets/img10.jpeg'),
   require('../../assets/img11.jpeg'),
-  require('../../assets/img5.jpeg'),
+  require('../../assets/img12.jpeg'),
   require('../../assets/img13.jpeg'),
-  require('../../assets/img4.jpeg'),
+  require('../../assets/img14.jpeg'),
   require('../../assets/img15.jpeg'),
   require('../../assets/img16.jpeg'),
   require('../../assets/img17.jpeg'),
@@ -54,15 +55,19 @@ function fmt(n) {
   return n >= 1000 ? (n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0) + 'k' : String(n);
 }
 
-const profiles = Array.from({ length: 22 }).map((_, i) => {
+const initialProfiles = Array.from({ length: 40 }).map((_, i) => {
   const first = baseNames[i % baseNames.length];
   const last = surnames[i % surnames.length];
   const name = `${first} ${last}`;
   const live = true;
+  
+  // Use static images cyclically
+  const img = girlImages[i % girlImages.length];
+  
   return {
     id: String(i + 1),
     name,
-    img: girlImages[i % girlImages.length],
+    img, // static require
     live,
     viewers: viewersFor(i + 1),
   };
@@ -70,61 +75,55 @@ const profiles = Array.from({ length: 22 }).map((_, i) => {
 
 function ProfileCard({ item, onPress }) {
   const [failed, setFailed] = useState(false);
+  const scale = React.useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (item.live) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scale, {
+            toValue: 1.2,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [item.live]);
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.cardWrapper,
-        { transform: [{ scale: pressed ? 0.97 : 1 }] },
+        { transform: [{ scale: pressed ? 0.95 : 1 }] },
       ]}
     >
-      <View style={styles.card}>
-        {failed ? (
-          <LinearGradient colors={['#101010', '#2b1052']} style={styles.cardImage}>
-            <Text style={styles.cardFallbackText}>Image unavailable</Text>
-          </LinearGradient>
-        ) : (
-          <View style={styles.cardImage}>
-            <Image
-              source={typeof item.img === 'string' ? { uri: item.img } : item.img}
-              style={StyleSheet.absoluteFillObject}
-              resizeMode="none"
-              onError={() => setFailed(true)}
-            />
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.7)']}
-              start={{ x: 0, y: 0.2 }}
-              end={{ x: 0, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
-            />
-          </View>
-        )}
-
-        <View
-          style={[
-            styles.liveBadge,
-            { backgroundColor: item.live ? '#e11d48' : '#4b5563' },
-          ]}
-        >
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>{item.live ? 'LIVE' : 'OFFLINE'}</Text>
+      <View style={styles.cardContainer}>
+        <View style={styles.avatarContainer}>
+          <Image
+            source={typeof item.img === 'string' ? { uri: item.img } : item.img}
+            style={styles.avatarImage}
+            resizeMode="cover"
+            onError={() => setFailed(true)}
+          />
+          {item.live && (
+            <Animated.View style={[styles.liveBadgeSmall, { transform: [{ scale }] }]}>
+              <Text style={styles.liveTextSmall}>LIVE</Text>
+            </Animated.View>
+          )}
         </View>
-
-        <View style={[styles.viewerPill, styles.viewerTop]}>
-          <Ionicons name="eye" size={14} color="#F9FAFB" />
-          <Text style={styles.viewerText}>{fmt(item.viewers)}</Text>
-        </View>
-
-        <View style={styles.cardFooter}>
-          <Text numberOfLines={1} style={styles.cardName}>
-            {item.name}
-          </Text>
-          <View style={styles.locationPill}>
-            <Text style={styles.locationFlag}>🇮🇳</Text>
-            <Text style={styles.locationText}>India</Text>
-          </View>
-        </View>
+        <Text numberOfLines={1} style={styles.cardName}>
+          {item.name}
+        </Text>
+        <Text style={styles.viewerTextSmall}>{fmt(item.viewers)} views</Text>
       </View>
     </Pressable>
   );
@@ -133,30 +132,57 @@ function ProfileCard({ item, onPress }) {
 export default function HomeScreen({ navigation }) {
   const { diamonds, setLiveRooms, globalCallVisible, globalCallIndex, liveRooms } = useWallet();
   const insets = useSafeAreaInsets();
-  const bannerY = React.useRef(new Animated.Value(-80)).current;
+  const bannerY = React.useRef(new Animated.Value(-100)).current;
   const bannerOpacity = React.useRef(new Animated.Value(0)).current;
   const iconScale = React.useRef(new Animated.Value(1)).current;
   
+  const [data, setData] = useState(initialProfiles);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    setLiveRooms(profiles.filter((p) => p.live));
-  }, [setLiveRooms]);
+    setLiveRooms(data.filter((p) => p.live));
+  }, [setLiveRooms, data]);
+
+  const loadMore = () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    
+    // Simulate network delay
+    setTimeout(() => {
+      const currentLength = data.length;
+      const more = Array.from({ length: 10 }).map((_, i) => {
+        const index = currentLength + i;
+        const first = baseNames[index % baseNames.length];
+        const last = surnames[index % surnames.length];
+        const name = `${first} ${last}`;
+        const img = girlImages[index % girlImages.length];
+        
+        return {
+          id: String(index + 1),
+          name,
+          img,
+          live: true,
+          viewers: viewersFor(index + 1),
+        };
+      });
+      
+      setData(prev => [...prev, ...more]);
+      setLoadingMore(false);
+    }, 1500);
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return <View style={{ height: 100 }} />;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="large" color="#ff529f" />
+        <Text style={styles.loadingText}>Loading more profiles...</Text>
+      </View>
+    );
+  };
 
   useEffect(() => {
-    if (globalCallVisible) {
-      bannerY.setValue(-80);
-      bannerOpacity.setValue(0);
-      Animated.parallel([
-        Animated.timing(bannerY, { toValue: 0, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(bannerOpacity, { toValue: 1, duration: 400, easing: Easing.ease, useNativeDriver: true }),
-      ]).start();
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(iconScale, { toValue: 1.12, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(iconScale, { toValue: 1.0, duration: 600, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-        ])
-      ).start();
-    }
+    // Global Call Banner removed as per request
   }, [globalCallVisible, globalCallIndex]);
 
   const renderItem = ({ item }) => (
@@ -168,61 +194,45 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {globalCallVisible && (
-        <Animated.View style={{ position: 'absolute', top: (insets.top || 0) + 8, left: 12, right: 12, transform: [{ translateY: bannerY }], opacity: bannerOpacity, zIndex: 50 }}>
-          <Pressable onPress={() => navigation.navigate('Purchase')}>
-            <LinearGradient colors={["#0f172a", "#1f2937", "#065f46"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, paddingVertical: 14, paddingHorizontal: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={typeof (liveRooms[globalCallIndex]?.img) === 'string' ? { uri: liveRooms[globalCallIndex]?.img } : liveRooms[globalCallIndex]?.img} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>Incoming Video Call</Text>
-                  <Text style={{ color: '#FDE68A', fontSize: 13 }}>{liveRooms[globalCallIndex]?.name || 'Host'} is calling…</Text>
-                </View>
-                <Animated.View style={{ transform: [{ scale: iconScale }] }}>
-                  <Ionicons name="videocam" size={36} color="#22c55e" />
-                </Animated.View>
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
-      )}
-      <LinearGradient
-        colors={['#140014', '#19053a', '#cb00a2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[
-          styles.header,
-          { paddingTop: (insets.top || 0) -12 },
-        ]}
-      >
+      <View style={[styles.header, { marginTop: 10 }]}>
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.appTitle}>DekhoJi Live</Text>
-            <Text style={styles.appSubtitle}>Discover trending live rooms</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.appTitle}>DekhoJi</Text>
+            <View style={styles.liveTagContainer}>
+               <Text style={styles.liveTagText}>LIVE</Text>
+            </View>
           </View>
 
-          <Pressable
-            onPress={() => navigation.navigate('Purchase')}
-            style={({ pressed }) => [
-              styles.balancePill,
-              { opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.03)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.balanceGradient}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Pressable
+              onPress={() => navigation.navigate('Purchase')}
+              style={({ pressed }) => [
+                styles.balancePill,
+                { opacity: pressed ? 0.8 : 1 },
+              ]}
             >
-              <Ionicons name="diamond" size={20} color="#FDE68A" />
-              <Text style={styles.balanceText}>{diamonds}</Text>
-            </LinearGradient>
-          </Pressable>
+              <LinearGradient
+                colors={['#2c2c2e', '#1c1c1e']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.balanceGradient}
+              >
+                <Ionicons name="diamond" size={16} color="#FFD700" />
+                <Text style={styles.balanceText}>{diamonds}</Text>
+              </LinearGradient>
+            </Pressable>
+            
+            <Pressable style={styles.iconButton}>
+               <Ionicons name="notifications-outline" size={24} color="#fff" />
+               <View style={styles.notificationDot} />
+            </Pressable>
+          </View>
         </View>
-      </LinearGradient>
+      </View>
 
       <FlatList
-        data={profiles}
+        data={data}
+        key={2}
         keyExtractor={(item) => item.id}
         numColumns={2}
         renderItem={renderItem}
@@ -232,21 +242,26 @@ export default function HomeScreen({ navigation }) {
           styles.listContent,
           { paddingBottom: (insets.bottom || 0) + 16 },
         ]}
+        ListFooterComponent={renderFooter}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
       />
     </SafeAreaView>
   );
 }
 
-const RADIUS = 18;
+const RADIUS = 16;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: '#0f0f11', // Slightly lighter dark background
   },
   header: {
-    paddingHorizontal: 8,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerRow: {
     flexDirection: 'row',
@@ -254,161 +269,165 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   appTitle: {
-    color: '#F9FAFB',
-    fontSize: 24,
+    color: '#ff529f',
+    fontSize: 28,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: -0.5,
+    fontStyle: 'italic',
+  },
+  liveTagContainer: {
+    backgroundColor: '#ff529f',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 6,
+    transform: [{ rotate: '-5deg' }]
+  },
+  liveTagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '900',
   },
   appSubtitle: {
-    marginTop: 4,
-    color: '#9CA3AF',
-    fontSize: 12,
+    display: 'none',
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1c1c1e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ff529f',
+    borderWidth: 1.5,
+    borderColor: '#1c1c1e',
   },
   balancePill: {
     borderRadius: 999,
     overflow: 'hidden',
+    shadowColor: "#FDE68A",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 5,
   },
   balanceGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(248,250,252,0.12)',
-  },
-  balanceText: {
-    color: '#F9FAFB',
-    marginLeft: 6,
-    fontWeight: '800',
-    fontSize: 18,
-  },
-  listContent: {
-    paddingHorizontal: 6,
-    paddingTop: 12,
-  },
-  columnWrapper: {
-    justifyContent: 'space-between',
-  },
-  cardWrapper: {
-    flex: 1,
-    marginBottom: 16,
-    marginHorizontal: 2,
-  },
-  card: {
-    borderRadius: RADIUS,
-    overflow: 'hidden',
-    backgroundColor: '#020617',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
-  cardImage: {
-    height: 260,
-    borderTopLeftRadius: RADIUS,
-    borderTopRightRadius: RADIUS,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardFallbackText: {
-    color: '#E5E7EB',
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-  liveBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
-    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: 'rgba(253, 230, 138, 0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  balanceText: {
+    color: '#FDE68A',
+    marginLeft: 6,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  listContent: {
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 100, // Extra padding for bottom
+  },
+  columnWrapper: {
+    justifyContent: 'space-around', // Center the larger items
+  },
+  cardWrapper: {
+    flex: 1/2,
+    marginBottom: 24,
     alignItems: 'center',
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: '#FEE2E2',
-    marginRight: 5,
-  },
-  liveText: {
-    color: '#F9FAFB',
-    fontWeight: '800',
-    fontSize: 13,
-    letterSpacing: 0.6,
-  },
-  viewerTop: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  cardFooter: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    flexDirection: 'row',
+  cardContainer: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'transparent',
-    zIndex: 10,
+    width: '100%',
+  },
+  avatarContainer: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 3,
+    borderColor: '#ff529f', // Pink border
+    padding: 4, // Gap between image and border
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 75,
+    backgroundColor: '#2c2c2e',
   },
   cardName: {
-    color: '#0fd40fff',
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '700',
-    fontSize: 14,
-    flex: 1,
-    marginRight: 8,
-    textShadowColor: 'rgba(0,0,0,0.7)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textAlign: 'center',
+    marginBottom: 2,
   },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(225,29,72,0.18)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(225,29,72,0.35)',
-  },
-  locationText: {
-    color: '#FDE68A',
-    fontWeight: '700',
-    fontSize: 11,
-    marginLeft: 4,
-    textShadowColor: 'rgba(0,0,0,0.7)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  locationFlag: {
+  viewerTextSmall: {
+    color: '#9ca3af',
     fontSize: 12,
-    marginRight: 4,
+    textAlign: 'center',
   },
-  viewerPill: {
-    flexDirection: 'row',
+  liveBadgeSmall: {
+    position: 'absolute',
+    bottom: -8,
+    alignSelf: 'center',
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 3,
+    borderColor: '#0f0f11', // Match background to create "cutout" effect
+  },
+  liveTextSmall: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  // Keep banner styles
+  bannerContainer: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 100,
+    shadowColor: "#ff529f",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  bannerGradient: { borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 82, 159, 0.3)' },
+  bannerContent: { flexDirection: 'row', alignItems: 'center' },
+  bannerAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12, borderWidth: 2, borderColor: '#ff529f' },
+  bannerTextContainer: { flex: 1 },
+  bannerTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 2 },
+  bannerSubtitle: { color: '#ff529f', fontSize: 12, fontWeight: '600' },
+  callIconContainer: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#22c55e', alignItems: 'center', justifyContent: 'center' },
+  footerLoader: {
+    paddingVertical: 20,
     alignItems: 'center',
-    backgroundColor: 'rgba(225,29,72,0.18)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(225,29,72,0.35)',
+    justifyContent: 'center',
+    paddingBottom: 50,
   },
-  viewerText: {
-    color: '#0fd40fff',
+  loadingText: {
+    color: '#ff529f',
+    marginTop: 10,
+    fontSize: 12,
     fontWeight: '600',
-    fontSize: 12,
-    marginLeft: 4,
-    textShadowColor: 'rgba(0,0,0,0.7)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 });

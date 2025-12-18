@@ -27,7 +27,7 @@ export default function BoyTabs() {
             Home: 'home',
             Wallet: 'diamond',
             Messages: 'chatbubbles',
-            Profile: 'person',
+            Settings: 'settings',
           };
           const name = map[route.name] || 'ellipse';
           if (route.name === 'Messages' && unreadMessages) {
@@ -45,7 +45,7 @@ export default function BoyTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Wallet" component={PurchaseScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Settings" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

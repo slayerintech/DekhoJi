@@ -4,6 +4,10 @@
     "appVersionSource": "local"
   },
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
     "preview": {
       "android": {
         "gradleCommand": ":app:assembleDebug --stacktrace"
