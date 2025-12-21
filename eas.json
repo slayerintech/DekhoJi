@@ -18,5 +18,8 @@
         "gradleCommand": ":app:bundleRelease --stacktrace --warning-mode all"
       }
     }
+  },
+  "submit": {
+    "production": {}
   }
 }
