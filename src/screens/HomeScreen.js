@@ -9,10 +9,12 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
   Platform,
-  Alert
+  Alert,
+  LayoutAnimation,
+  UIManager
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,12 +79,54 @@ const initialProfiles = Array.from({ length: 40 }).map((_, i) => {
   };
 });
 
+const Pulse = ({ delay }) => {
+  const anim = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.loop(
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease),
+        })
+      )
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.pulseRing,
+        {
+          transform: [
+            {
+              scale: anim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 1.5], // Reduced scale for grid view
+              }),
+            },
+          ],
+          opacity: anim.interpolate({
+            inputRange: [0, 0.5, 1],
+            outputRange: [0.6, 0.3, 0],
+          }),
+        },
+      ]}
+    />
+  );
+};
+
 function ProfileCard({ item, onPress }) {
   const [failed, setFailed] = useState(false);
   const scale = React.useRef(new Animated.Value(1)).current;
+  const imageScale = React.useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (item.live) {
+      // Badge Pulse
       Animated.loop(
         Animated.sequence([
           Animated.timing(scale, {
@@ -94,6 +138,24 @@ function ProfileCard({ item, onPress }) {
           Animated.timing(scale, {
             toValue: 1,
             duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Image Breathing Animation (Minimal)
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(imageScale, {
+            toValue: 1.03, // Subtle scale up
+            duration: 1500, // Slower breath
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(imageScale, {
+            toValue: 1,
+            duration: 1500,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
@@ -112,9 +174,15 @@ function ProfileCard({ item, onPress }) {
     >
       <View style={styles.cardContainer}>
         <View style={styles.avatarContainer}>
-          <Image
+          {item.live && (
+            <>
+              <Pulse delay={0} />
+              <Pulse delay={1000} />
+            </>
+          )}
+          <Animated.Image
             source={typeof item.img === 'string' ? { uri: item.img } : item.img}
-            style={styles.avatarImage}
+            style={[styles.avatarImage, { transform: [{ scale: imageScale }] }]}
             resizeMode="cover"
             onError={() => setFailed(true)}
           />
@@ -174,21 +242,35 @@ export default function HomeScreen({ navigation }) {
     setTimeout(checkPermissions, 1000);
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      setData(prevData => {
-        const shuffled = [...prevData];
-        // Fisher-Yates shuffle
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-      });
-    });
 
-    return unsubscribe;
-  }, [navigation]);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+      }
+    }
+
+    const interval = setInterval(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setData(prevData => {
+        // Only shuffle the first 21 items (unique images) to ensure no duplicates in top view
+        const uniqueCount = 21; 
+        const head = prevData.slice(0, uniqueCount);
+        const tail = prevData.slice(uniqueCount);
+        
+        // Fisher-Yates shuffle for the head
+        for (let i = head.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [head[i], head[j]] = [head[j], head[i]];
+        }
+        
+        return [...head, ...tail];
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setLiveRooms(data.filter((p) => p.live));
@@ -239,7 +321,20 @@ export default function HomeScreen({ navigation }) {
   const renderItem = ({ item }) => (
     <ProfileCard
       item={item}
-      onPress={() => navigation.navigate('LiveWatch', { profile: item })}
+      onPress={() => {
+        if (diamonds < 10) {
+          Alert.alert(
+            "Insufficient Diamonds",
+            "You need to have at least 10 diamonds to watch.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Buy Diamonds", onPress: () => setShowDiamondSheet(true) }
+            ]
+          );
+          return;
+        }
+        navigation.navigate('LiveWatch', { profile: item });
+      }}
     />
   );
 
@@ -418,6 +513,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 82, 159, 0.5)',
   },
   avatarImage: {
     width: '100%',

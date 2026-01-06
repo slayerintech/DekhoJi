@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Vibration, Platform, AppState, PermissionsAndroid, ToastAndroid } from 'react-native';
-import { Audio } from 'expo-av';
-import * as Haptics from 'expo-haptics';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform, AppState } from 'react-native';
 
 const CallContext = createContext(null);
 
@@ -55,9 +53,6 @@ export function CallProvider({ children }) {
     }
   ]);
 
-  const soundObject = useRef(new Audio.Sound());
-  const vibrationInterval = useRef(null);
-
   // Trigger a call automatically every 10 seconds
   useEffect(() => {
     let timer;
@@ -106,10 +101,10 @@ export function CallProvider({ children }) {
     let timeout;
     if (isCallActive) {
       startRinging();
-      // Auto-end call after 5 seconds
+      // Auto-end call after 10 seconds
       timeout = setTimeout(() => {
         endCall('missed');
-      }, 5000);
+      }, 10000);
     } else {
       stopRinging();
     }
@@ -120,75 +115,11 @@ export function CallProvider({ children }) {
   }, [isCallActive]);
 
   const startRinging = async () => {
-    console.log("Call Context: Starting Ringing");
-    
-    // Cancel any existing vibration first
-    Vibration.cancel();
-
-    // 1. Debug Vibration Loop (Maximum Power)
-    const triggerAlert = async () => {
-      try {
-        console.log("Triggering Alert...");
-        
-        if (Platform.OS === 'android') {
-          // Visual confirmation
-          ToastAndroid.show("Ringing... (Check System Vibration Settings)", ToastAndroid.SHORT);
-          
-          // Pattern: Start immediately (0), Vibrate 800ms, Pause 200ms, Repeat
-          // 'true' means loop this pattern until cancelled
-          Vibration.vibrate([0, 800, 200], true); 
-        } else {
-           // iOS Fallback
-           Vibration.vibrate();
-           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        }
-
-      } catch (e) {
-        console.warn("Alert error:", e);
-      }
-    };
-
-    // Trigger immediately
-    triggerAlert();
-    
-    // We don't need setInterval for Android if we use the pattern loop (second arg = true)
-    // But for safety/debug, we'll leave a simple log or iOS fallback interval
-    if (Platform.OS === 'ios') {
-        vibrationInterval.current = setInterval(triggerAlert, 1000);
-    }
-
-    // 2. Audio Setup (Restored to ensure App Focus)
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/sounds/ringtone.mp3'),
-        { isLooping: true }
-      );
-      setSound(sound);
-      await sound.playAsync();
-    } catch (error) {
-      console.log('Error playing sound:', error);
-    }
+    // Audio and Vibration removed
   };
 
   const stopRinging = async () => {
-    console.log("Call Context: Stopping Ringing");
-    try {
-      await soundObject.current.stopAsync();
-      await soundObject.current.unloadAsync();
-    } catch (e) {}
-    
-    Vibration.cancel();
-    if (vibrationInterval.current) {
-      clearInterval(vibrationInterval.current);
-      vibrationInterval.current = null;
-    }
+    // Audio and Vibration removed
   };
 
   return (

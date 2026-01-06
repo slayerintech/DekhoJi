@@ -10,11 +10,11 @@ const UPI_VPA = '9109696780@jupiteraxis';
 const UPI_NAME = 'DekhoJi App';
 
 const DIAMOND_PACKS = [
-  { id: '1', label: 'Starter Pack', diamonds: 50, price: 299, bonus: '0' },
-  { id: '2', label: 'Basic Pack', diamonds: 100, price: 499, bonus: '0' },
-  { id: '3', label: 'Value Pack', diamonds: 200, price: 899, bonus: '+10' },
-  { id: '4', label: 'Pro Pack', diamonds: 300, price: 1299, bonus: '+20' },
-  { id: '5', label: 'Mega Bundle', diamonds: 600, price: 2299, bonus: '+50 FREE' },
+  { id: '1', label: 'Starter Pack', diamonds: 50, price: 100, bonus: '0' },
+  { id: '2', label: 'Basic Pack', diamonds: 100, price: 199, bonus: '0' },
+  { id: '3', label: 'Value Pack', diamonds: 200, price: 399, bonus: '+10' },
+  { id: '4', label: 'Pro Pack', diamonds: 300, price: 599, bonus: '+20' },
+  { id: '5', label: 'Mega Bundle', diamonds: 600, price: 999, bonus: '+50 FREE' },
 ];
 
 function DiamondPackCard({ pack, selected, onPress }) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, Switch, Alert, Share } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useWallet } from '../context/WalletContext';
@@ -7,10 +7,41 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
 
+const SettingItem = ({ icon, color, label, value, onPress, isSwitch, switchValue, onSwitchChange, showChevron = true }) => (
+  <Pressable 
+    style={({ pressed }) => [styles.row, pressed && !isSwitch && { backgroundColor: '#2c2c2e' }]} 
+    onPress={isSwitch ? null : onPress}
+  >
+    <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
+      <Ionicons name={icon} size={20} color={color} />
+    </View>
+    <View style={styles.rowContent}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      {value && <Text style={styles.rowValue}>{value}</Text>}
+    </View>
+    {isSwitch ? (
+      <Switch
+        value={switchValue}
+        onValueChange={onSwitchChange}
+        trackColor={{ false: "#3e3e3e", true: "#e91e63" }}
+        thumbColor={switchValue ? "#fff" : "#f4f3f4"}
+      />
+    ) : (
+      showChevron && <Ionicons name="chevron-forward" size={20} color="#555" />
+    )}
+  </Pressable>
+);
+
+const SectionHeader = ({ title }) => (
+  <Text style={styles.sectionHeader}>{title}</Text>
+);
+
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user, setUser, diamonds, gender, currentPack, setShowDiamondSheet } = useWallet();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [dataSaver, setDataSaver] = useState(false);
+  const [autoplay, setAutoplay] = useState(true);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -31,17 +62,32 @@ export default function ProfileScreen({ navigation }) {
     );
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: 'Check out DekhoJi App! Watch live streams and connect with friends.',
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}>
         
         {/* Header Profile Section */}
         <View style={styles.header}>
           <View style={styles.profileRow}>
-            <Image 
-              source={{ uri: user?.avatar || 'https://i.pravatar.cc/300' }} 
-              style={styles.avatar} 
-            />
+            <View style={styles.avatarWrapper}>
+                <Image 
+                source={{ uri: user?.avatar || 'https://i.pravatar.cc/300' }} 
+                style={styles.avatar} 
+                />
+                <View style={styles.editBadge}>
+                    <Ionicons name="pencil" size={12} color="#fff" />
+                </View>
+            </View>
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{user?.name || 'Guest User'}</Text>
               <Text style={styles.email}>{user?.email || 'No email linked'}</Text>
@@ -51,126 +97,180 @@ export default function ProfileScreen({ navigation }) {
                   start={{x: 0, y: 0}} end={{x: 1, y: 0}}
                   style={styles.badge}
                 >
+                  <Ionicons name="star" size={10} color="#fff" style={{marginRight: 4}} />
                   <Text style={styles.badgeText}>{currentPack || 'Free Member'}</Text>
                 </LinearGradient>
               </View>
             </View>
+          </View>
+          
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+             <View style={styles.statItem}>
+                 <Text style={styles.statValue}>0</Text>
+                 <Text style={styles.statLabel}>Following</Text>
+             </View>
+             <View style={styles.statDivider} />
+             <View style={styles.statItem}>
+                 <Text style={styles.statValue}>0</Text>
+                 <Text style={styles.statLabel}>Followers</Text>
+             </View>
+             <View style={styles.statDivider} />
+             <View style={styles.statItem}>
+                 <Text style={styles.statValue}>Level 1</Text>
+                 <Text style={styles.statLabel}>Status</Text>
+             </View>
           </View>
         </View>
 
         {/* Creator Section (Conditional) */}
         {gender === 'girl' && (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionHeader}>CREATOR STUDIO</Text>
+            <SectionHeader title="CREATOR STUDIO" />
             <View style={styles.sectionBody}>
-              <Pressable 
-                style={styles.row} 
-                onPress={() => navigation.navigate('GoLive')}
-              >
-                <View style={[styles.iconContainer, { backgroundColor: 'rgba(233, 30, 99, 0.15)' }]}>
-                  <Ionicons name="videocam" size={20} color="#e91e63" />
-                </View>
-                <Text style={[styles.rowLabel, { color: '#e91e63', fontWeight: '700' }]}>Go Live Now</Text>
-                <Ionicons name="chevron-forward" size={20} color="#555" />
-              </Pressable>
+                <SettingItem 
+                    icon="videocam" 
+                    color="#e91e63" 
+                    label="Go Live Now" 
+                    onPress={() => navigation.navigate('GoLive')} 
+                />
+                <View style={styles.separator} />
+                <SettingItem 
+                    icon="stats-chart" 
+                    color="#e91e63" 
+                    label="Analytics" 
+                    onPress={() => {}} 
+                />
             </View>
           </View>
         )}
 
-        {/* Account Settings */}
+        {/* Wallet Section */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>ACCOUNT</Text>
+          <SectionHeader title="WALLET & EARNINGS" />
           <View style={styles.sectionBody}>
-            <Pressable style={styles.row} onPress={() => setShowDiamondSheet(true)}>
-              <View style={[styles.iconContainer, { backgroundColor: '#FFD70020' }]}>
-                <Ionicons name="wallet" size={20} color="#FFD700" />
-              </View>
-              <View style={styles.rowTextContainer}>
-                <Text style={styles.rowLabel}>My Wallet</Text>
-                <Text style={styles.rowValue}>{diamonds} Diamonds</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#555" />
-            </Pressable>
+            <SettingItem 
+                icon="wallet" 
+                color="#FFD700" 
+                label="My Wallet" 
+                value={`${diamonds} Diamonds`}
+                onPress={() => setShowDiamondSheet(true)} 
+            />
+            <View style={styles.separator} />
+            <SettingItem 
+                icon="gift" 
+                color="#FF9800" 
+                label="Refer & Earn" 
+                value="Get Free Diamonds"
+                onPress={handleShare} 
+            />
           </View>
         </View>
 
-        {/* Preferences */}
+        {/* App Settings */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>PREFERENCES</Text>
+          <SectionHeader title="APP SETTINGS" />
           <View style={styles.sectionBody}>
-            <View style={styles.row}>
-              <View style={[styles.iconContainer, { backgroundColor: '#4CAF5020' }]}>
-                <Ionicons name="notifications" size={20} color="#4CAF50" />
-              </View>
-              <Text style={styles.rowLabel}>Notifications</Text>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: "#3e3e3e", true: "#e91e63" }}
-                thumbColor={notificationsEnabled ? "#fff" : "#f4f3f4"}
-              />
-            </View>
-
+            <SettingItem 
+                icon="notifications" 
+                color="#4CAF50" 
+                label="Push Notifications" 
+                isSwitch 
+                switchValue={notificationsEnabled}
+                onSwitchChange={setNotificationsEnabled}
+            />
             <View style={styles.separator} />
+            <SettingItem 
+                icon="cellular" 
+                color="#2196F3" 
+                label="Data Saver" 
+                isSwitch 
+                switchValue={dataSaver}
+                onSwitchChange={setDataSaver}
+            />
+            <View style={styles.separator} />
+            <SettingItem 
+                icon="play-circle" 
+                color="#9C27B0" 
+                label="Auto-Play Videos" 
+                isSwitch 
+                switchValue={autoplay}
+                onSwitchChange={setAutoplay}
+            />
+            <View style={styles.separator} />
+             <SettingItem 
+                icon="globe" 
+                color="#00BCD4" 
+                label="Language" 
+                value="English"
+                onPress={() => {}} 
+            />
+          </View>
+        </View>
 
-            <Pressable style={styles.row}>
-              <View style={[styles.iconContainer, { backgroundColor: '#9C27B020' }]}>
-                <Ionicons name="globe" size={20} color="#9C27B0" />
-              </View>
-              <Text style={styles.rowLabel}>Language</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.rowValueText}>English</Text>
-                <Ionicons name="chevron-forward" size={20} color="#555" style={{ marginLeft: 8 }} />
-              </View>
-            </Pressable>
+        {/* Security */}
+        <View style={styles.sectionContainer}>
+          <SectionHeader title="SECURITY & PRIVACY" />
+          <View style={styles.sectionBody}>
+             <SettingItem 
+                icon="lock-closed" 
+                color="#607D8B" 
+                label="Change Password" 
+                onPress={() => {}} 
+            />
+             <View style={styles.separator} />
+             <SettingItem 
+                icon="hand-left" 
+                color="#F44336" 
+                label="Blocked Users" 
+                onPress={() => {}} 
+            />
           </View>
         </View>
 
         {/* Support */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>SUPPORT</Text>
+          <SectionHeader title="SUPPORT & LEGAL" />
           <View style={styles.sectionBody}>
-            <Pressable style={styles.row} onPress={() => navigation.navigate('Terms')}>
-              <View style={[styles.iconContainer, { backgroundColor: '#607D8B20' }]}>
-                <Ionicons name="document-text" size={20} color="#607D8B" />
-              </View>
-              <Text style={styles.rowLabel}>Terms & Conditions</Text>
-              <Ionicons name="chevron-forward" size={20} color="#555" />
-            </Pressable>
-
-            <View style={styles.separator} />
-
-            <Pressable style={styles.row} onPress={() => navigation.navigate('Privacy')}>
-              <View style={[styles.iconContainer, { backgroundColor: '#607D8B20' }]}>
-                <Ionicons name="shield-checkmark" size={20} color="#607D8B" />
-              </View>
-              <Text style={styles.rowLabel}>Privacy Policy</Text>
-              <Ionicons name="chevron-forward" size={20} color="#555" />
-            </Pressable>
-
+             <SettingItem 
+                icon="help-circle" 
+                color="#8BC34A" 
+                label="Help Center" 
+                onPress={() => {}} 
+            />
              <View style={styles.separator} />
-
-            <Pressable style={styles.row}>
-              <View style={[styles.iconContainer, { backgroundColor: '#607D8B20' }]}>
-                <Ionicons name="help-circle" size={20} color="#607D8B" />
-              </View>
-              <Text style={styles.rowLabel}>Help & Support</Text>
-              <Ionicons name="chevron-forward" size={20} color="#555" />
-            </Pressable>
+             <SettingItem 
+                icon="document-text" 
+                color="#9E9E9E" 
+                label="Terms of Service" 
+                onPress={() => navigation.navigate('Terms')} 
+            />
+             <View style={styles.separator} />
+             <SettingItem 
+                icon="shield-checkmark" 
+                color="#9E9E9E" 
+                label="Privacy Policy" 
+                onPress={() => navigation.navigate('Privacy')} 
+            />
+             <View style={styles.separator} />
+             <SettingItem 
+                icon="information-circle" 
+                color="#9E9E9E" 
+                label="About DekhoJi" 
+                value="v1.0.0"
+                onPress={() => {}} 
+            />
           </View>
         </View>
 
-        {/* Actions */}
+        {/* Logout */}
         {!user?.isGuest && (
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionBody}>
-            <Pressable style={styles.row} onPress={handleLogout}>
-              <View style={[styles.iconContainer, { backgroundColor: '#F4433620' }]}>
-                <Ionicons name="log-out" size={20} color="#F44336" />
-              </View>
-              <Text style={[styles.rowLabel, { color: '#F44336' }]}>Logout</Text>
+        <View style={[styles.sectionContainer, { marginTop: 20 }]}>
+            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+                <Ionicons name="log-out" size={20} color="#fff" style={{marginRight: 8}} />
+                <Text style={styles.logoutText}>Log Out</Text>
             </Pressable>
-          </View>
+            <Text style={styles.versionText}>DekhoJi App v1.0.0 (Build 102)</Text>
         </View>
         )}
 
@@ -185,116 +285,164 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    padding: 16,
   },
-  /* Header */
   header: {
     marginBottom: 24,
-    marginTop: 10,
+    backgroundColor: '#1c1c1e',
+    borderRadius: 20,
+    padding: 20,
   },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatarWrapper: {
+      position: 'relative',
   },
   avatar: {
     width: 70,
     height: 70,
     borderRadius: 35,
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: '#e91e63',
+  },
+  editBadge: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: '#e91e63',
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: '#1c1c1e',
   },
   profileInfo: {
-    flex: 1,
     marginLeft: 16,
+    flex: 1,
   },
   name: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   email: {
     color: '#888',
     fontSize: 14,
-    marginTop: 2,
+    marginBottom: 8,
   },
   badgeContainer: {
-    marginTop: 6,
     flexDirection: 'row',
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   badgeText: {
-    color: '#000',
+    color: '#fff',
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: 'bold',
   },
-  editBtn: {
-    padding: 10,
-    backgroundColor: '#1c1c1e',
-    borderRadius: 20,
+  statsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: '#2c2c2e',
+      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
   },
-  /* Sections */
+  statItem: {
+      flex: 1,
+      alignItems: 'center',
+  },
+  statValue: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+  },
+  statLabel: {
+      color: '#888',
+      fontSize: 11,
+      marginTop: 2,
+  },
+  statDivider: {
+      width: 1,
+      backgroundColor: '#3a3a3c',
+      height: '80%',
+      alignSelf: 'center',
+  },
   sectionContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
-    color: '#666',
+    color: '#888',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 8,
     marginLeft: 12,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   sectionBody: {
     backgroundColor: '#1c1c1e',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    minHeight: 56,
+    justifyContent: 'space-between',
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+  },
+  rowContent: {
+      flex: 1,
+      marginLeft: 16,
   },
   rowLabel: {
-    flex: 1,
     color: '#fff',
     fontSize: 16,
-    fontWeight: '500',
-  },
-  rowTextContainer: {
-    flex: 1,
-    justifyContent: 'center',
   },
   rowValue: {
-    color: '#888',
-    fontSize: 13,
-    marginTop: 2,
-  },
-  rowValueText: {
-    color: '#888',
-    fontSize: 15,
+      color: '#888',
+      fontSize: 14,
+      marginTop: 2,
   },
   separator: {
     height: 1,
     backgroundColor: '#2c2c2e',
-    marginLeft: 64, // align with text start
+    marginLeft: 68,
+  },
+  logoutButton: {
+      backgroundColor: '#e91e63',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      borderRadius: 16,
+      marginBottom: 16,
+  },
+  logoutText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
   },
   versionText: {
-    textAlign: 'center',
-    color: '#444',
-    fontSize: 12,
-    marginBottom: 20,
+      color: '#555',
+      textAlign: 'center',
+      fontSize: 12,
   },
 });
