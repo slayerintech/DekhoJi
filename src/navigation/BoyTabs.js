@@ -1,7 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
-import PurchaseScreen from '../screens/PurchaseScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,13 +23,13 @@ export default function BoyTabs() {
         tabBarLabelStyle: { fontSize: 12, marginTop: -2 },
         tabBarIcon: ({ color, size }) => {
           const map = {
-            Home: 'home',
+            Feed: 'home',
             Wallet: 'diamond',
-            Messages: 'chatbubbles',
+            Chats: 'chatbubbles',
             Settings: 'settings',
           };
           const name = map[route.name] || 'ellipse';
-          if (route.name === 'Messages' && unreadMessages) {
+          if (route.name === 'Chats' && unreadMessages) {
             return (
               <View style={{ width: size + 8, height: size + 8 }}>
                 <Ionicons name={name} color={color} size={size} />
@@ -42,9 +41,8 @@ export default function BoyTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Wallet" component={PurchaseScreen} />
-      <Tab.Screen name="Messages" component={MessagesScreen} />
+      <Tab.Screen name="Feed" component={HomeScreen} />
+      <Tab.Screen name="Chats" component={MessagesScreen} />
       <Tab.Screen name="Settings" component={ProfileScreen} />
     </Tab.Navigator>
   );

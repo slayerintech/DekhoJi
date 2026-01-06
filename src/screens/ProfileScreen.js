@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { user, setUser, diamonds, gender, setGender, currentPack } = useWallet();
+  const { user, setUser, diamonds, gender, currentPack, setShowDiamondSheet } = useWallet();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleLogout = async () => {
@@ -29,12 +29,6 @@ export default function ProfileScreen({ navigation }) {
         }
       ]
     );
-  };
-
-  const toggleGender = () => {
-    const newGender = gender === 'boy' ? 'girl' : 'boy';
-    setGender(newGender);
-    Alert.alert("Identity Updated", `You are now browsing as a ${newGender}.`);
   };
 
   return (
@@ -87,26 +81,13 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>ACCOUNT</Text>
           <View style={styles.sectionBody}>
-            <Pressable style={styles.row} onPress={() => navigation.navigate('Wallet')}>
+            <Pressable style={styles.row} onPress={() => setShowDiamondSheet(true)}>
               <View style={[styles.iconContainer, { backgroundColor: '#FFD70020' }]}>
                 <Ionicons name="wallet" size={20} color="#FFD700" />
               </View>
               <View style={styles.rowTextContainer}>
                 <Text style={styles.rowLabel}>My Wallet</Text>
                 <Text style={styles.rowValue}>{diamonds} Diamonds</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#555" />
-            </Pressable>
-            
-            <View style={styles.separator} />
-
-            <Pressable style={styles.row} onPress={toggleGender}>
-              <View style={[styles.iconContainer, { backgroundColor: '#2196F320' }]}>
-                <Ionicons name="person-circle" size={20} color="#2196F3" />
-              </View>
-              <View style={styles.rowTextContainer}>
-                <Text style={styles.rowLabel}>Identity</Text>
-                <Text style={styles.rowValue}>{gender === 'boy' ? 'Boy' : 'Girl'}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#555" />
             </Pressable>
@@ -180,6 +161,7 @@ export default function ProfileScreen({ navigation }) {
         </View>
 
         {/* Actions */}
+        {!user?.isGuest && (
         <View style={styles.sectionContainer}>
           <View style={styles.sectionBody}>
             <Pressable style={styles.row} onPress={handleLogout}>
@@ -190,6 +172,7 @@ export default function ProfileScreen({ navigation }) {
             </Pressable>
           </View>
         </View>
+        )}
 
       </ScrollView>
     </SafeAreaView>

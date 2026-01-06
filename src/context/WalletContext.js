@@ -15,6 +15,9 @@ export function WalletProvider({ children }) {
   const [globalCallVisible, setGlobalCallVisible] = useState(false);
   const [globalCallIndex, setGlobalCallIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Global Diamond Sheet State
+  const [showDiamondSheet, setShowDiamondSheet] = useState(false);
 
   React.useEffect(() => {
     (async () => {
@@ -81,21 +84,28 @@ export function WalletProvider({ children }) {
         setCurrentPack('Free Member');
         return;
       }
-      const ref = doc(db, 'users', user.id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        setDiamonds(typeof data.diamonds === 'number' ? data.diamonds : 0);
-        setCurrentPack(data.currentPack || 'Free Member');
-      } else {
-        await setDoc(ref, {
-          name: user.name || '',
-          email: user.email || '',
-          avatar: user.avatar || '',
-          diamonds: 0,
-          currentPack: 'Free Member',
-          createdAt: Date.now(),
-        });
+      try {
+        const ref = doc(db, 'users', user.id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          setDiamonds(typeof data.diamonds === 'number' ? data.diamonds : 0);
+          setCurrentPack(data.currentPack || 'Free Member');
+        } else {
+          await setDoc(ref, {
+            name: user.name || '',
+            email: user.email || '',
+            avatar: user.avatar || '',
+            diamonds: 0,
+            currentPack: 'Free Member',
+            createdAt: Date.now(),
+          });
+          setDiamonds(0);
+          setCurrentPack('Free Member');
+        }
+      } catch (e) {
+        // Fallback for when Firestore is restricted (e.g. auth failed but user is in guest mode)
+        console.log("Firestore sync failed, using local state only:", e);
         setDiamonds(0);
         setCurrentPack('Free Member');
       }
@@ -145,8 +155,10 @@ export function WalletProvider({ children }) {
       globalCallIndex,
       setGlobalCallIndex,
       isLoading,
+      showDiamondSheet,
+      setShowDiamondSheet,
     }),
-    [gender, user, diamonds, liveRooms, unreadMessages, globalCallVisible, globalCallIndex, isLoading]
+    [gender, user, diamonds, liveRooms, unreadMessages, globalCallVisible, globalCallIndex, isLoading, showDiamondSheet]
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

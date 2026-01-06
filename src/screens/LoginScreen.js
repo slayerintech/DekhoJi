@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useWallet } from '../context/WalletContext';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+// import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
@@ -25,36 +25,37 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [mode, setMode] = React.useState('login');
-  React.useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: '1014858874602-cm9o4k5jten01ftdutmfu0c43rorqrt5.apps.googleusercontent.com',
-    });
-  }, []);
+  // React.useEffect(() => {
+  //   GoogleSignin.configure({
+  //     webClientId: '1014858874602-cm9o4k5jten01ftdutmfu0c43rorqrt5.apps.googleusercontent.com',
+  //   });
+  // }, []);
 
   const continueGoogle = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      if (response && response.data && response.data.idToken) {
-        const idToken = response.data.idToken;
-        const credential = GoogleAuthProvider.credential(idToken);
-        const cred = await signInWithCredential(auth, credential);
-        const u = cred.user;
-        setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'google' });
-        navigation.replace('Home');
-      }
-    } catch (error) {
-      if (error.code === 'SIGN_IN_CANCELLED') {
-        // cancelled
-      } else if (error.code === 'IN_PROGRESS') {
-        // in progress
-      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        Alert.alert('Google Login', 'Play services not available');
-      } else {
-        Alert.alert('Google Login', 'Login failed. Try again.');
-        console.error(error);
-      }
-    }
+    Alert.alert('Google Login', 'Google login is currently disabled.');
+    // try {
+    //   await GoogleSignin.hasPlayServices();
+    //   const response = await GoogleSignin.signIn();
+    //   if (response && response.data && response.data.idToken) {
+    //     const idToken = response.data.idToken;
+    //     const credential = GoogleAuthProvider.credential(idToken);
+    //     const cred = await signInWithCredential(auth, credential);
+    //     const u = cred.user;
+    //     setUser({ id: u.uid, name: u.displayName || 'User', email: u.email || '', avatar: u.photoURL || '', method: 'google' });
+    //     navigation.replace('Home');
+    //   }
+    // } catch (error) {
+    //   if (error.code === 'SIGN_IN_CANCELLED') {
+    //     // cancelled
+    //   } else if (error.code === 'IN_PROGRESS') {
+    //     // in progress
+    //   } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+    //     Alert.alert('Google Login', 'Play services not available');
+    //   } else {
+    //     Alert.alert('Google Login', 'Login failed. Try again.');
+    //     console.error(error);
+    //   }
+    // }
   };
 
   const continueEmail = async () => {

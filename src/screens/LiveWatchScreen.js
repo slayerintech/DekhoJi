@@ -49,7 +49,7 @@ export default function LiveWatchScreen({ navigation, route }) {
     const [messageCounter, setMessageCounter] = useState(initialMessages.length);
     const [failed, setFailed] = useState(false);
     const insets = useSafeAreaInsets();
-    const { diamonds } = useWallet();
+    const { diamonds, setShowDiamondSheet } = useWallet();
     const [comment, setComment] = useState('');
 
     useEffect(() => {
@@ -76,7 +76,7 @@ export default function LiveWatchScreen({ navigation, route }) {
     }, []);
 
     const watchLive = () => {
-        navigation.navigate('Purchase', { from: 'LiveWatch' });
+        setShowDiamondSheet(true);
     };
     
     const goBack = () => {
@@ -169,7 +169,7 @@ export default function LiveWatchScreen({ navigation, route }) {
                                 'Join live to talk directly with the host!',
                                 [
                                     { text: 'Cancel', style: 'cancel' },
-                                    { text: 'Join Now', onPress: () => navigation.navigate('Purchase', { from: 'LiveWatch' }) }
+                                    { text: 'Join Now', onPress: () => setShowDiamondSheet(true) }
                                 ]
                             );
                             setComment('');

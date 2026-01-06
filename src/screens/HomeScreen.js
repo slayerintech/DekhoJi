@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   FlatList,
   Image,
@@ -7,8 +7,12 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
+  PermissionsAndroid,
+  Platform,
+  Alert
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -130,7 +134,7 @@ function ProfileCard({ item, onPress }) {
 }
 
 export default function HomeScreen({ navigation }) {
-  const { diamonds, setLiveRooms, globalCallVisible, globalCallIndex, liveRooms } = useWallet();
+  const { diamonds, setLiveRooms, globalCallVisible, globalCallIndex, liveRooms, setShowDiamondSheet } = useWallet();
   const insets = useSafeAreaInsets();
   const bannerY = React.useRef(new Animated.Value(-100)).current;
   const bannerOpacity = React.useRef(new Animated.Value(0)).current;
@@ -138,6 +142,53 @@ export default function HomeScreen({ navigation }) {
   
   const [data, setData] = useState(initialProfiles);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        try {
+          const granted = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+          );
+          
+          if (!granted) {
+            const status = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+            );
+            
+            if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+              Alert.alert(
+                "Permission Required",
+                "Please enable notifications to receive incoming calls and vibrations.",
+                [{ text: "OK" }]
+              );
+            }
+          }
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+    };
+
+    // Small delay to ensure UI is ready
+    setTimeout(checkPermissions, 1000);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      setData(prevData => {
+        const shuffled = [...prevData];
+        // Fisher-Yates shuffle
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      });
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     setLiveRooms(data.filter((p) => p.live));
@@ -205,7 +256,7 @@ export default function HomeScreen({ navigation }) {
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable
-              onPress={() => navigation.navigate('Purchase')}
+              onPress={() => setShowDiamondSheet(true)}
               style={({ pressed }) => [
                 styles.balancePill,
                 { opacity: pressed ? 0.8 : 1 },
@@ -222,7 +273,10 @@ export default function HomeScreen({ navigation }) {
               </LinearGradient>
             </Pressable>
             
-            <Pressable style={styles.iconButton}>
+            <Pressable 
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('Chats')}
+            >
                <Ionicons name="notifications-outline" size={24} color="#fff" />
                <View style={styles.notificationDot} />
             </Pressable>

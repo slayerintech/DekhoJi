@@ -2,17 +2,21 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WalletProvider, useWallet } from './src/context/WalletContext';
+import { CallProvider } from './src/context/CallContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import GlobalCallUI from './src/components/GlobalCallUI';
+import DiamondSheet from './src/components/DiamondSheet';
+import { navigationRef } from './src/navigation/navigationRef';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import WelcomeScreen from './src/screens/WelcomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import GoLiveScreen from './src/screens/GoLiveScreen';
 import LiveWatchScreen from './src/screens/LiveWatchScreen';
 import WaitingScreen from './src/screens/WaitingScreen';
-import PurchaseScreen from './src/screens/PurchaseScreen';
 import BoyTabs from './src/navigation/BoyTabs';
 import TermsScreen from './src/screens/TermsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
@@ -32,7 +36,7 @@ function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <StatusBar style="light" />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
@@ -40,13 +44,13 @@ function RootNavigator() {
             <Stack.Screen name="Home" component={BoyTabs} />
             <Stack.Screen name="GoLive" component={GoLiveScreen} />
             <Stack.Screen name="LiveWatch" component={LiveWatchScreen} />
-            <Stack.Screen name="Purchase" component={PurchaseScreen} />
             <Stack.Screen name="Waiting" component={WaitingScreen} />
             <Stack.Screen name="Terms" component={TermsScreen} />
             <Stack.Screen name="Privacy" component={PrivacyPolicyScreen} />
           </>
         ) : (
           <>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="AgeGate" component={AgeGateScreen} />
@@ -62,9 +66,13 @@ function RootNavigator() {
 export default function App() {
   return (
     <WalletProvider>
-      <SafeAreaProvider>
-        <RootNavigator />
-      </SafeAreaProvider>
+      <CallProvider>
+        <SafeAreaProvider>
+          <RootNavigator />
+          <GlobalCallUI />
+          <DiamondSheet />
+        </SafeAreaProvider>
+      </CallProvider>
     </WalletProvider>
   );
 }
