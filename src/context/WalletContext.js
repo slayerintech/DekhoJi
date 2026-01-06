@@ -105,7 +105,6 @@ export function WalletProvider({ children }) {
         }
       } catch (e) {
         // Fallback for when Firestore is restricted (e.g. auth failed but user is in guest mode)
-        console.log("Firestore sync failed, using local state only:", e);
         setDiamonds(0);
         setCurrentPack('Free Member');
       }
