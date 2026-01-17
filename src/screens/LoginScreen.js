@@ -221,7 +221,7 @@ return (
               </Text>
 
               <Text style={styles.terms}>
-                By continuing you agree to our <Text style={styles.link} onPress={() => navigation.navigate('Terms')}>Terms and Conditions</Text>
+                By continuing you agree to our <Text style={styles.link} onPress={() => navigation.navigate('Terms')}>Terms</Text> and <Text style={styles.link} onPress={() => navigation.navigate('Privacy')}>Privacy Policy</Text>
               </Text>
             </View>
 

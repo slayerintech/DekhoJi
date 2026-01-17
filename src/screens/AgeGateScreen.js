@@ -13,7 +13,12 @@ export default function AgeGateScreen({ navigation }) {
       </LinearGradient>
       <View style={{ padding: 24, flex: 1, justifyContent: 'center' }}>
         <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 12 }}>Age Confirmation</Text>
-        <Text style={{ color: '#bbb', marginBottom: 20 }}>You must be at least 18 years old to use this app. By continuing you confirm you are 18+ and agree to the Terms and Privacy Policy.</Text>
+        <Text style={{ color: '#bbb', marginBottom: 20 }}>
+          You must be at least 18 years old to use this app. By continuing you confirm you are 18+ and agree to the 
+          <Text style={{ color: '#e91e63', fontWeight: 'bold' }} onPress={() => navigation.navigate('Terms')}> Terms </Text>
+          and 
+          <Text style={{ color: '#e91e63', fontWeight: 'bold' }} onPress={() => navigation.navigate('Privacy')}> Privacy Policy</Text>.
+        </Text>
         <Pressable onPress={() => setAccepted((v) => !v)} style={{ backgroundColor: accepted ? '#22c55e' : '#1c1c1c', borderColor: accepted ? '#22c55e' : '#333', borderWidth: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}>
           <Text style={{ color: '#fff', fontWeight: '700' }}>{accepted ? 'I confirm I am 18+' : 'Tap to confirm 18+'}</Text>
         </Pressable>
