@@ -285,7 +285,7 @@ export default function ProfileScreen({ navigation }) {
         {isFocused && (
           <View style={{ alignItems: 'center', marginTop: 20 }}>
             <BannerAd
-              adUnitId={bannerAdUnitId}
+              unitId={bannerAdUnitId}
               size={BannerAdSize.LARGE_BANNER}
               requestOptions={{
                 requestNonPersonalizedAdsOnly: true,

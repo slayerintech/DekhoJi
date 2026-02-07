@@ -67,12 +67,21 @@ if (isExpoGo) {
   // Real implementation for Production / Development Builds
   try {
     const rnAds = require('react-native-google-mobile-ads');
-    mobileAds = rnAds.default;
-    InterstitialAd = rnAds.InterstitialAd;
-    AdEventType = rnAds.AdEventType;
-    TestIds = rnAds.TestIds;
-    BannerAd = rnAds.BannerAd;
-    BannerAdSize = rnAds.BannerAdSize;
+    
+    // Attempt to resolve mobileAds instance safely
+    if (rnAds && typeof rnAds.initialize === 'function') {
+        mobileAds = rnAds;
+    } else if (rnAds?.default && typeof rnAds.default.initialize === 'function') {
+        mobileAds = rnAds.default;
+    }
+
+    // Attempt to resolve other components
+    InterstitialAd = rnAds.InterstitialAd || rnAds.default?.InterstitialAd || InterstitialAd;
+    AdEventType = rnAds.AdEventType || rnAds.default?.AdEventType || AdEventType;
+    TestIds = rnAds.TestIds || rnAds.default?.TestIds || TestIds;
+    BannerAd = rnAds.BannerAd || rnAds.default?.BannerAd || BannerAd;
+    BannerAdSize = rnAds.BannerAdSize || rnAds.default?.BannerAdSize || BannerAdSize;
+
   } catch (error) {
     console.error('Failed to require react-native-google-mobile-ads', error);
   }

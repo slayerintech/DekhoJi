@@ -165,7 +165,7 @@ export default function MessagesScreen({ navigation }) {
       {isFocused && (
         <View style={styles.bannerContainer}>
           <BannerAd
-            adUnitId={chatBannerUnitId}
+            unitId={chatBannerUnitId}
             size={BannerAdSize.BANNER}
           />
         </View>

@@ -66,8 +66,12 @@ function RootNavigator() {
 
 export default function App() {
   useEffect(() => {
-    if (mobileAds) {
-      mobileAds.initialize();
+    try {
+      if (mobileAds && typeof mobileAds.initialize === 'function') {
+        mobileAds.initialize();
+      }
+    } catch (error) {
+      console.error("AdMob initialization failed:", error);
     }
   }, []);
 

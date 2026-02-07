@@ -3,7 +3,7 @@
     "name": "DekhoJi",
     "slug": "DekhoJi",
     "scheme": "dekhoji",
-    "version": "1.0.11",
+    "version": "1.0.14",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -23,7 +23,7 @@
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "package": "com.slayer.dekhoji",
-      "versionCode": 15,
+      "versionCode": 22,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
@@ -44,10 +44,11 @@
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
             "minSdkVersion": 24,
-            "kotlinVersion": "2.1.20"
+            "kotlinVersion": "2.1.20",
+            "ndkVersion": "26.1.10909125"
           }
         }
       ],
@@ -57,7 +58,8 @@
           "androidAppId": "ca-app-pub-7503400330650109~6945543023",
         "iosAppId": "ca-app-pub-7503400330650109~6945543023"
         }
-      ]
+      ],
+      "./plugins/withAndroidNdkFix"
     ],
     "extra": {
       "eas": {
