@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useWallet } from '../context/WalletContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Animated, Easing } from 'react-native';
- 
+import { InterstitialAd, AdEventType, TestIds, isExpoGo } from '../utils/AdManager';
 
 const baseNames = [
   'Priya', 'Aisha', 'Neha', 'Rani', 'Anjali', 'Pooja', 'Kiran', 'Sunita', 'Sapna', 'Nisha',
@@ -78,6 +78,16 @@ const initialProfiles = Array.from({ length: 40 }).map((_, i) => {
     viewers: viewersFor(i + 1),
   };
 });
+
+const interstitialAdUnitId = Platform.select({
+  ios: 'ca-app-pub-7503400330650109/6468740733',
+  android: 'ca-app-pub-7503400330650109/6468740733',
+  default: 'ca-app-pub-7503400330650109/6468740733',
+});
+
+const homeInterstitial = InterstitialAd.createForAdRequest(
+  (__DEV__ && !isExpoGo) ? TestIds.INTERSTITIAL : interstitialAdUnitId
+);
 
 const Pulse = ({ delay }) => {
   const anim = React.useRef(new Animated.Value(0)).current;
@@ -210,38 +220,63 @@ export default function HomeScreen({ navigation }) {
   
   const [data, setData] = useState(initialProfiles);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [adReady, setAdReady] = useState(false);
+  const pendingProfileRef = React.useRef(null);
+  const diamondsRef = React.useRef(diamonds);
 
   useEffect(() => {
-    const checkPermissions = async () => {
-      if (Platform.OS === 'android' && Platform.Version >= 33) {
-        try {
-          const granted = await PermissionsAndroid.check(
-            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-          );
-          
-          if (!granted) {
-            const status = await PermissionsAndroid.request(
-              PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-            );
-            
-            if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-              Alert.alert(
-                "Permission Required",
-                "Please enable notifications to receive incoming calls and vibrations.",
-                [{ text: "OK" }]
-              );
-            }
-          }
-        } catch (err) {
-          console.warn(err);
-        }
-      }
-    };
+    diamondsRef.current = diamonds;
+  }, [diamonds]);
 
-    // Small delay to ensure UI is ready
-    setTimeout(checkPermissions, 1000);
+  useEffect(() => {
+    // Permission check removed as per user request
   }, []);
 
+
+  useEffect(() => {
+    const loadedListener = homeInterstitial.addAdEventListener(AdEventType.LOADED, () => {
+      setAdReady(true);
+    });
+
+    const errorListener = homeInterstitial.addAdEventListener(AdEventType.ERROR, () => {
+      setAdReady(false);
+    });
+
+    const closedListener = homeInterstitial.addAdEventListener(AdEventType.CLOSED, () => {
+      const profile = pendingProfileRef.current;
+      pendingProfileRef.current = null;
+      setAdReady(false);
+      
+      // Check for diamonds AFTER ad is closed
+      if (diamondsRef.current < 10) {
+        Alert.alert(
+          "Insufficient Diamonds",
+          "You need to have at least 10 diamonds to watch.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Buy Diamonds", onPress: () => setShowDiamondSheet(true) }
+          ]
+        );
+      } else {
+        if (profile) {
+          navigation.navigate('LiveWatch', { profile });
+        }
+      }
+      
+      // Delay loading next ad to prevent navigation stutter/crashes
+      setTimeout(() => {
+        homeInterstitial.load();
+      }, 1000);
+    });
+
+    homeInterstitial.load();
+
+    return () => {
+      loadedListener();
+      errorListener();
+      closedListener();
+    };
+  }, [navigation]);
 
 
   useEffect(() => {
@@ -318,23 +353,32 @@ export default function HomeScreen({ navigation }) {
     // Global Call Banner removed as per request
   }, [globalCallVisible, globalCallIndex]);
 
+  const handleProfilePress = async (item) => {
+    if (!adReady) {
+      // If ad is not ready, we still check for diamonds before navigating
+      if (diamonds < 10) {
+        Alert.alert(
+          "Insufficient Diamonds",
+          "You need to have at least 10 diamonds to watch.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Buy Diamonds", onPress: () => setShowDiamondSheet(true) }
+          ]
+        );
+        return;
+      }
+      navigation.navigate('LiveWatch', { profile: item });
+      return;
+    }
+
+    pendingProfileRef.current = item;
+    homeInterstitial.show();
+  };
+
   const renderItem = ({ item }) => (
     <ProfileCard
       item={item}
-      onPress={() => {
-        if (diamonds < 10) {
-          Alert.alert(
-            "Insufficient Diamonds",
-            "You need to have at least 10 diamonds to watch.",
-            [
-              { text: "Cancel", style: "cancel" },
-              { text: "Buy Diamonds", onPress: () => setShowDiamondSheet(true) }
-            ]
-          );
-          return;
-        }
-        navigation.navigate('LiveWatch', { profile: item });
-      }}
+      onPress={() => handleProfilePress(item)}
     />
   );
 

@@ -13,6 +13,12 @@
         "gradleCommand": ":app:assembleDebug --stacktrace"
       }
     },
+    "apk": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease",
+        "buildType": "apk"
+      }
+    },
     "production": {
       "android": {
         "gradleCommand": ":app:bundleRelease --stacktrace --warning-mode all"

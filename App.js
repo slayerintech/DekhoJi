@@ -7,8 +7,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import GlobalCallUI from './src/components/GlobalCallUI';
 import DiamondSheet from './src/components/DiamondSheet';
 import { navigationRef } from './src/navigation/navigationRef';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { mobileAds } from './src/utils/AdManager';
 
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -64,6 +65,12 @@ function RootNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (mobileAds) {
+      mobileAds.initialize();
+    }
+  }, []);
+
   return (
     <WalletProvider>
       <CallProvider>

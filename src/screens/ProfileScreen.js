@@ -3,9 +3,15 @@ import { View, Text, StyleSheet, ScrollView, Image, Pressable, Switch, Alert, Sh
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useWallet } from '../context/WalletContext';
+import { useIsFocused } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BannerAd, BannerAdSize, TestIds, isExpoGo } from '../utils/AdManager';
+
+const bannerAdUnitId = (__DEV__ && !isExpoGo)
+  ? TestIds.BANNER
+  : 'ca-app-pub-7503400330650109/3008648505';
 
 const SettingItem = ({ icon, color, label, value, onPress, isSwitch, switchValue, onSwitchChange, showChevron = true }) => (
   <Pressable 
@@ -37,6 +43,7 @@ const SectionHeader = ({ title }) => (
 );
 
 export default function ProfileScreen({ navigation }) {
+  const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const { user, setUser, diamonds, gender, currentPack, setShowDiamondSheet } = useWallet();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -272,6 +279,19 @@ export default function ProfileScreen({ navigation }) {
             </Pressable>
             <Text style={styles.versionText}>DekhoJi App v1.0.0 (Build 102)</Text>
         </View>
+        )}
+
+        {/* Bottom Banner Ad */}
+        {isFocused && (
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <BannerAd
+              adUnitId={bannerAdUnitId}
+              size={BannerAdSize.LARGE_BANNER}
+              requestOptions={{
+                requestNonPersonalizedAdsOnly: true,
+              }}
+            />
+          </View>
         )}
 
       </ScrollView>

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Pressable, StatusBar, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCall } from '../context/CallContext';
-import { useWallet } from '../context/WalletContext';
+import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BannerAd, BannerAdSize, InterstitialAd, AdEventType, TestIds, isExpoGo } from '../utils/AdManager';
 
 // Static images for "Active Now" section
 const activeUsers = [
@@ -16,13 +17,55 @@ const activeUsers = [
   { id: 'a6', name: 'Simran', image: require('../../assets/img9.jpeg') },
 ];
 
+const chatInterstitialUnitId = (__DEV__ && !isExpoGo)
+  ? TestIds.INTERSTITIAL
+  : 'ca-app-pub-7503400330650109/6468740733';
+
+const chatBannerUnitId = (__DEV__ && !isExpoGo)
+  ? TestIds.BANNER
+  : 'ca-app-pub-7503400330650109/3008648505';
+
+const chatInterstitial = InterstitialAd.createForAdRequest(chatInterstitialUnitId);
+
 export default function MessagesScreen({ navigation }) {
+  const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const { callHistory } = useCall();
-  const { setShowDiamondSheet } = useWallet();
+  const [adReady, setAdReady] = useState(false);
+
+  useEffect(() => {
+    const loadedListener = chatInterstitial.addAdEventListener(AdEventType.LOADED, () => {
+      setAdReady(true);
+    });
+
+    const errorListener = chatInterstitial.addAdEventListener(AdEventType.ERROR, () => {
+      setAdReady(false);
+    });
+
+    const closedListener = chatInterstitial.addAdEventListener(AdEventType.CLOSED, () => {
+      setAdReady(false);
+      chatInterstitial.load();
+    });
+
+    chatInterstitial.load();
+
+    return () => {
+      loadedListener();
+      errorListener();
+      closedListener();
+    };
+  }, []);
+
+  const showChatAd = () => {
+    if (!adReady) {
+      return;
+    }
+
+    chatInterstitial.show();
+  };
 
   const renderOnlineUser = ({ item }) => (
-    <Pressable style={styles.storyContainer} onPress={() => setShowDiamondSheet(true)}>
+    <Pressable style={styles.storyContainer} onPress={showChatAd}>
       <LinearGradient
         colors={['#e91e63', '#ff6b6b']}
         style={styles.storyRing}
@@ -62,7 +105,7 @@ export default function MessagesScreen({ navigation }) {
         </View>
 
         <Pressable 
-          onPress={() => setShowDiamondSheet(true)}
+          onPress={showChatAd}
           style={styles.callActionBtn}
         >
           <Ionicons name="videocam" size={22} color="#fff" />
@@ -100,7 +143,6 @@ export default function MessagesScreen({ navigation }) {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={() => (
            <View>
-             {/* Active Now Section */}
              <View style={styles.storiesSection}>
                <Text style={styles.sectionTitle}>Active Now</Text>
                <FlatList
@@ -113,13 +155,21 @@ export default function MessagesScreen({ navigation }) {
                />
              </View>
 
-             {/* Recent Section Header */}
              <View style={styles.sectionHeader}>
                <Text style={styles.sectionTitle}>Recent History</Text>
              </View>
            </View>
         )}
       />
+
+      {isFocused && (
+        <View style={styles.bannerContainer}>
+          <BannerAd
+            adUnitId={chatBannerUnitId}
+            size={BannerAdSize.BANNER}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -271,5 +321,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1d1d1f',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bannerContainer: {
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0b0b0c',
   },
 });
