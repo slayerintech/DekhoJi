@@ -31,7 +31,8 @@
         "INTERNET",
         "WAKE_LOCK",
         "ACCESS_NETWORK_STATE",
-        "MODIFY_AUDIO_SETTINGS"
+        "MODIFY_AUDIO_SETTINGS",
+        "com.google.android.gms.permission.AD_ID"
       ]
     },
     "web": {
@@ -44,11 +45,13 @@
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
             "minSdkVersion": 24,
             "kotlinVersion": "2.1.20",
-            "ndkVersion": "26.1.10909125"
+            "ndkVersion": "26.1.10909125",
+            "usesCleartextTraffic": true,
+            "buildToolsVersion": "35.0.0"
           }
         }
       ],
@@ -63,7 +66,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "7e1f3569-b5ad-4d5f-9553-1819db07e00a"
+        "projectId": "1738746f-d71d-4071-97b7-680c2f1f5010"
       }
     }
   }
