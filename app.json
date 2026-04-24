@@ -23,7 +23,7 @@
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "package": "com.slayer.dekhoji",
-      "versionCode": 22,
+      "versionCode": 29,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
@@ -59,14 +59,14 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-7503400330650109~6945543023",
-        "iosAppId": "ca-app-pub-7503400330650109~6945543023"
+          "iosAppId": "ca-app-pub-7503400330650109~6945543023"
         }
       ],
       "./plugins/withAndroidNdkFix"
     ],
     "extra": {
       "eas": {
-        "projectId": "1738746f-d71d-4071-97b7-680c2f1f5010"
+        "projectId": "7e1f3569-b5ad-4d5f-9553-1819db07e00a"
       }
     }
   }
